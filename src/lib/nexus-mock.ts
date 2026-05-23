@@ -1,5 +1,6 @@
 import {
   SAMPLE_CONTACTS,
+  checkInUrgency,
   daysSinceLastContact,
   findSampleContact,
 } from "./sample-contacts";
@@ -122,12 +123,106 @@ export function generateMockResponse(
     };
   }
 
-  // 2) Contact-specific (e.g. /chat/c_alex, or asking "what do you know about Alex")
+  // 2) Friendship check-in: "who should I check in on", "catch up",
+  //    "haven't talked to", "reach out". Lean warm + actionable.
+  if (
+    /\b(check.?in|catch.?up|reach out|haven'?t (talked|spoken|seen|heard)|been neglect|been ignoring|miss(ed|ing)? )/i.test(
+      query,
+    )
+  ) {
+    const overdue = [...SAMPLE_CONTACTS]
+      .map((c) => ({ contact: c, urgency: checkInUrgency(c) }))
+      .filter(
+        (item): item is { contact: Contact; urgency: number } =>
+          item.urgency !== null && item.urgency > 0,
+      )
+      .sort((a, b) => b.urgency - a.urgency);
+
+    const top = overdue.slice(0, 5).map((o) => o.contact);
+    const refs: ContactReference[] = top.map((c) => ({
+      contactId: c.id,
+      reason: `Last touch ${formatLastContact(c)}`,
+    }));
+
+    if (top.length === 0) {
+      return {
+        id: makeId("a"),
+        role: "assistant",
+        payload: {
+          tag: "Check-ins",
+          intro:
+            "You're actually pretty on top of things right now — nobody's overdue based on their cadence. Want me to flag a few people you haven't talked to in a long time anyway?",
+          cards: [
+            {
+              title: "What I'd do next",
+              bullets: [
+                "Pick one person you miss and send a no-pressure note.",
+                "Set a cadence for anyone marked \"manual\" — they slip the most.",
+                "Add a birthday or two so I can give you a heads-up.",
+              ],
+            },
+          ],
+          followUps: [
+            "Show me the people I haven't talked to in a while",
+            "Who haven't I seen in person this year?",
+            "Help me plan a coffee for this weekend",
+          ],
+        },
+      };
+    }
+
+    return {
+      id: makeId("a"),
+      role: "assistant",
+      payload: {
+        tag: "Check-ins",
+        intro: `Here are ${top.length} friends I'd nudge first — sorted by how overdue you are based on the cadence you set for each.`,
+        cards: [
+          {
+            title: "Reach out this week",
+            bullets: top.slice(0, 3).map((c) => {
+              const name = c.nickname ?? c.name;
+              const last = formatLastContact(c);
+              return `${name} — last touch ${last}. ${suggestNudge(c)}`;
+            }),
+          },
+          {
+            title: "On your radar (less urgent)",
+            bullets:
+              top.length > 3
+                ? top.slice(3).map((c) => {
+                    const name = c.nickname ?? c.name;
+                    const last = formatLastContact(c);
+                    return `${name} — ${last}. ${
+                      c.meetingPlace ? `In ${c.meetingPlace.label}.` : "No location on file."
+                    }`;
+                  })
+                : ["Nobody else is overdue right now."],
+          },
+          {
+            title: "How I'd actually send it",
+            bullets: [
+              "Lead with a memory, not a question. Curiosity > obligation.",
+              "Suggest a concrete next step (coffee, call, FaceTime) and a real date.",
+              "Keep it under two sentences if it's been a while — easier to reply to.",
+            ],
+          },
+        ],
+        references: refs.slice(0, 4),
+        followUps: top
+          .slice(0, 3)
+          .map((c) => `Draft a check-in message for ${c.nickname ?? c.name}`)
+          .concat(["Who haven't I seen in person this year?"]),
+      },
+    };
+  }
+
+  // 3) Contact-specific (e.g. /chat/c_alex, or asking "what do you know about Alex")
   if (contact) {
     return contactDeepDive(contact);
   }
 
-  // 3) "Who knows X" graph queries
+  // 4) "Who knows X" graph queries
   const whoKnows = q.match(/who knows ([\w\s-]+)/);
   if (whoKnows) {
     const target = whoKnows[1]!.trim();
@@ -137,30 +232,44 @@ export function generateMockResponse(
     if (match) return contactDeepDive(match);
   }
 
-  // 4) Default — friendly fallback that explains what Nexus does
+  // 5) Default — friendly fallback that explains what Nexus does
   return {
     id: makeId("a"),
     role: "assistant",
     payload: {
       intro:
-        "I'm a relationship agent — I can answer questions across your network, draft intro emails, suggest catch-ups, and pull in info about people you haven't met yet. Try one of these:",
+        "I'm a relationship agent — I can help you stay in touch, answer questions across your network, draft intro emails, and pull in info about people you haven't met yet. Try one of these:",
       cards: [
         {
           title: "Things I'm good at today",
           bullets: [
-            "Finding warm paths to a person, role, or company.",
+            "Reminding you which friends you haven't talked to in a while.",
             "Summarising who someone is, when you met, and what you talked about.",
-            "Reminding you who you've been neglecting.",
+            "Finding warm paths to a person, role, or company.",
           ],
         },
       ],
       followUps: [
-        "Who do I know who knows VCs?",
-        "Who should I catch up with this week?",
+        "Who should I check in on?",
         "What do I know about Alex Chen?",
+        "Who haven't I seen in person this year?",
       ],
     },
   };
+}
+
+/** A small, situation-aware nudge for the check-in card. */
+function suggestNudge(c: Contact): string {
+  const tags = c.tags ?? [];
+  if (tags.includes("family")) return "Pick up the phone today.";
+  if (tags.includes("partner")) return "Plan something for this weekend.";
+  if (tags.includes("best-friend")) return "Send a memory + a real date.";
+  if (tags.includes("travel"))
+    return "A postcard or a 'still owe you a visit' voice memo.";
+  if (tags.includes("work") || tags.includes("mentor"))
+    return "Share a quick win or ask for advice — easy opener.";
+  if (tags.includes("neighbor")) return "Knock with coffee.";
+  return "Send a low-pressure 'thinking of you' text.";
 }
 
 function contactDeepDive(contact: Contact): ChatMessage {

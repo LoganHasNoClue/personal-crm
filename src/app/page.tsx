@@ -87,7 +87,10 @@ export default function Home() {
       )}
 
       {/* Nexus call-to-action card */}
-      <Link href="/chat" className="contents">
+      <Link
+        href="/chat?q=Who+should+I+check+in+on%3F"
+        className="contents"
+      >
         <GlassCard
           padding="lg"
           className="relative overflow-hidden border-violet-300/30 bg-gradient-to-br from-violet-500/15 via-fuchsia-400/10 to-indigo-500/15 dark:border-violet-400/20"
@@ -101,10 +104,10 @@ export default function Home() {
                 Try this
               </p>
               <p className="mt-0.5 text-[17px] font-semibold leading-tight text-zinc-900 dark:text-zinc-50">
-                &ldquo;Who do I know who knows VCs?&rdquo;
+                &ldquo;Who should I check in on?&rdquo;
               </p>
               <p className="mt-1 text-[13px] text-zinc-600 dark:text-zinc-300">
-                Run it as an agent task — I&apos;ll suggest warm paths.
+                I&apos;ll surface the friendships that need a little love.
               </p>
             </div>
             <ArrowRight className="size-5 text-zinc-500 dark:text-zinc-300" />
@@ -133,22 +136,24 @@ export default function Home() {
       </section>
 
       {/* Network stat tiles */}
-      <GlassCard padding="md" className="flex items-stretch gap-3">
-        <NetworkStat
-          value={`${SAMPLE_CONTACTS.filter((c) => c.source === "apple-contacts").length}`}
-          label="From Apple"
-        />
-        <Divider />
-        <NetworkStat
-          value={`${SAMPLE_CONTACTS.filter((c) => c.source === "linkedin").length}`}
-          label="From LinkedIn"
-        />
-        <Divider />
-        <NetworkStat
-          value={`${overdue.length}`}
-          label="Overdue"
-          tone="warning"
-        />
+      <GlassCard padding="md">
+        <div className="flex items-stretch gap-2">
+          <NetworkStat
+            value={`${SAMPLE_CONTACTS.filter((c) => c.source === "apple-contacts").length}`}
+            label="From Apple"
+          />
+          <Divider />
+          <NetworkStat
+            value={`${SAMPLE_CONTACTS.filter((c) => c.source === "linkedin").length}`}
+            label="From LinkedIn"
+          />
+          <Divider />
+          <NetworkStat
+            value={`${overdue.length}`}
+            label="Overdue"
+            tone="warning"
+          />
+        </div>
       </GlassCard>
     </main>
   );
