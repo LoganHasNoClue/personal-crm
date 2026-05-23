@@ -16,8 +16,13 @@
   --color-muted-foreground: var(--muted-foreground);
   --color-border: var(--border);
   --color-accent: var(--accent);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  /* Prefer San Francisco on Apple devices for a native iOS feel; fall back
+     to Geist (loaded via next/font) and finally a generic system stack. */
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text",
+    "SF Pro Display", var(--font-geist-sans), "Inter", system-ui,
+    "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", var(--font-geist-mono), Menlo,
+    Monaco, "Cascadia Mono", "Courier New", monospace;
 }
 
 @media (prefers-color-scheme: dark) {

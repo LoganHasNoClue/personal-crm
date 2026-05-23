@@ -23,20 +23,67 @@ export interface MeetingPlace extends GeoCoordinate {
   label: string;
 }
 
+/**
+ * Where a contact originally came from. Used by the import flow and the
+ * Source pill on a contact's detail screen.
+ */
+export type ContactSource =
+  | "apple-contacts"
+  | "linkedin"
+  | "instagram"
+  | "imessage"
+  | "manual";
+
+/**
+ * Loose category tags ("investor", "designer", "family"). Free-form so
+ * users can invent their own; we ship a starter palette in sample data.
+ */
+export type ContactTag = string;
+
+export interface ContactProfiles {
+  /** LinkedIn vanity URL or full URL. */
+  linkedin?: string;
+  /** Instagram @handle (no leading `@`). */
+  instagram?: string;
+  /** Phone number, free-form. */
+  phone?: string;
+  /** Email. */
+  email?: string;
+  /** iMessage handle / Apple ID. */
+  imessage?: string;
+}
+
 export interface Contact {
   id: ContactId;
   name: string;
   /** Optional preferred nickname / display name. */
   nickname?: string;
+  /** Short bio / job title shown under the name on the detail page. */
+  headline?: string;
   /** How we met / context (e.g. "college roommate", "work — design team"). */
   context?: string;
   /** Free-form notes the user wants to remember about this person. */
   notes?: string;
   /** Where you met them. Drives the map pin. */
   meetingPlace?: MeetingPlace;
+  /** Optional remote avatar URL. Falls back to gradient initials. */
+  photoUrl?: string;
+  /** Imported from which platform. Defaults to "manual" when missing. */
+  source?: ContactSource;
+  /** Loose categorical tags — drives search filters and chat agents. */
+  tags?: ContactTag[];
+  /** Reachability / social profiles. */
+  profiles?: ContactProfiles;
+  /**
+   * IDs of other contacts this person also knows. Bidirectional edges in
+   * the "who knows who" graph; v1 keeps this denormalized for simplicity.
+   */
+  mutualConnectionIds?: ContactId[];
+  /** Suggested check-in cadence, in days. Drives the "catch up due" rail. */
+  checkInCadenceDays?: number;
   /** ISO 8601 timestamp of the last logged interaction. */
   lastContactedAt?: string;
-  /** ISO 8601 timestamp the contact was created. */
+  /** ISO 8601 timestamp the contact was first added. */
   createdAt: string;
   /** ISO 8601 timestamp the contact was last updated. */
   updatedAt: string;

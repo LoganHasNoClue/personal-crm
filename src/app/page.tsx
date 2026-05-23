@@ -1,163 +1,289 @@
+import {
+  ArrowRight,
+  Clock,
+  Map as MapIcon,
+  Sparkles,
+  UserPlus2,
+} from "lucide-react";
 import Link from "next/link";
 
-import { GlassButton, GlassCard, GlassPill } from "@/components/glass";
-import { SAMPLE_CONTACTS } from "@/lib/sample-contacts";
+import { GlassCard, GlassPill } from "@/components/glass";
+import { Avatar, NavBar } from "@/components/ui";
+import {
+  SAMPLE_CONTACTS,
+  checkInUrgency,
+  daysSinceLastContact,
+} from "@/lib/sample-contacts";
+import { formatRelative } from "@/lib/time";
+import type { Contact } from "@/types/contact";
 
 export default function Home() {
-  const recent = [...SAMPLE_CONTACTS]
-    .filter((c) => c.lastContactedAt)
-    .sort((a, b) =>
-      (b.lastContactedAt ?? "").localeCompare(a.lastContactedAt ?? ""),
+  const overdue = [...SAMPLE_CONTACTS]
+    .map((c) => ({ contact: c, urgency: checkInUrgency(c) }))
+    .filter(
+      (item): item is { contact: Contact; urgency: number } =>
+        item.urgency !== null && item.urgency > 0,
     )
-    .slice(0, 3);
+    .sort((a, b) => b.urgency - a.urgency)
+    .slice(0, 6)
+    .map((item) => item.contact);
+
+  const recentlyAdded = [...SAMPLE_CONTACTS]
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+    .slice(0, 6);
 
   return (
-    <main className="app-shell mx-auto flex w-full max-w-md flex-col gap-6 px-5 pt-10 sm:max-w-lg sm:pt-16">
-      <header className="flex flex-col gap-3">
-        <GlassPill tone="success">
-          <span aria-hidden className="size-1.5 rounded-full bg-emerald-500" />
-          v0 · in development
-        </GlassPill>
-        <h1 className="text-[2.25rem] font-semibold leading-[1.05] tracking-tight sm:text-5xl">
-          A CRM for the
-          <br />
-          <span className="bg-gradient-to-br from-zinc-900 via-zinc-700 to-zinc-500 bg-clip-text text-transparent dark:from-white dark:via-zinc-200 dark:to-zinc-400">
-            people in your life.
-          </span>
-        </h1>
-        <p className="text-base leading-relaxed text-zinc-700 dark:text-zinc-300">
-          Remember names, log catch-ups, and get nudged before too much time
-          slips by. Built for phones, because that&apos;s where your people are.
-        </p>
-      </header>
-
-      <GlassCard padding="lg" className="flex flex-col gap-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-600 dark:text-zinc-300">
-            Recent catch-ups
-          </h2>
-          <Link
-            href="/contacts"
-            className="text-xs font-medium text-zinc-700 underline-offset-4 hover:underline dark:text-zinc-200"
-          >
-            View all
+    <main className="app-shell mx-auto flex w-full max-w-md flex-col gap-6 px-5 pt-10 sm:max-w-lg sm:pt-14">
+      <NavBar
+        title="Hey there 👋"
+        subtitle={`${SAMPLE_CONTACTS.length} people in your network`}
+        trailing={
+          <Link href="/more" className="contents" aria-label="More">
+            <Avatar name="You" seed="self" size="md" ring />
           </Link>
-        </div>
-        <ul className="flex flex-col divide-y divide-white/40 dark:divide-white/10">
-          {recent.map((contact) => (
-            <li
-              key={contact.id}
-              className="flex items-center gap-3 py-3 first:pt-0 last:pb-0"
-            >
-              <Avatar name={contact.nickname ?? contact.name} />
-              <div className="min-w-0 flex-1">
-                <p className="truncate font-medium text-zinc-900 dark:text-zinc-100">
-                  {contact.nickname ?? contact.name}
-                </p>
-                <p className="truncate text-xs text-zinc-600 dark:text-zinc-400">
-                  {contact.context ?? contact.meetingPlace?.label}
-                </p>
-              </div>
-              <span className="shrink-0 text-xs text-zinc-500 dark:text-zinc-400">
-                {formatRelative(contact.lastContactedAt!)}
-              </span>
-            </li>
-          ))}
-        </ul>
-      </GlassCard>
+        }
+      />
 
-      <GlassCard padding="lg" className="flex flex-col gap-3">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-600 dark:text-zinc-300">
-          What&apos;s coming
-        </h2>
-        <ul className="flex flex-col gap-3 text-base">
-          <FeatureRow
-            title="Contacts you actually use"
-            description="Names, faces, how you met, and the stuff you should remember."
-          />
-          <FeatureRow
-            title="Lightweight check-in cadence"
-            description="Tell it how often you want to keep in touch, get a friendly nudge."
-          />
-          <FeatureRow
-            title="People on a map"
-            description="See your network where you met them — powered by Apple Maps."
-          />
-        </ul>
-      </GlassCard>
-
-      <div className="flex flex-col gap-3 pb-2">
-        <Link href="/contacts" className="contents">
-          <GlassButton variant="primary" className="w-full">
-            Open contacts
-          </GlassButton>
-        </Link>
-        <Link href="/map" className="contents">
-          <GlassButton variant="secondary" className="w-full">
-            See the map
-          </GlassButton>
-        </Link>
+      {/* Quick actions row */}
+      <div className="grid grid-cols-3 gap-2">
+        <QuickAction
+          href="/chat"
+          label="Ask Nexus"
+          glyph={<Sparkles className="size-5" />}
+          accent
+        />
+        <QuickAction
+          href="/map"
+          label="Map"
+          glyph={<MapIcon className="size-5" />}
+        />
+        <QuickAction
+          href="/add"
+          label="Add"
+          glyph={<UserPlus2 className="size-5" />}
+        />
       </div>
 
-      <p className="pb-2 text-center text-xs text-zinc-500 dark:text-zinc-400">
-        Built mobile-first · tap targets are at least 44px
-      </p>
+      {/* Catch-up due rail */}
+      {overdue.length > 0 && (
+        <section className="flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <h2 className="px-1 text-[12px] font-semibold uppercase tracking-[0.06em] text-zinc-500 dark:text-zinc-400">
+              Catch up due
+            </h2>
+            <Link
+              href="/search?q=overdue"
+              className="text-[13px] font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-zinc-100"
+            >
+              See all
+            </Link>
+          </div>
+          <div className="-mx-5 flex gap-3 overflow-x-auto px-5 pb-1">
+            {overdue.map((c) => (
+              <CatchUpCard key={c.id} contact={c} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Nexus call-to-action card */}
+      <Link href="/chat" className="contents">
+        <GlassCard
+          padding="lg"
+          className="relative overflow-hidden border-violet-300/30 bg-gradient-to-br from-violet-500/15 via-fuchsia-400/10 to-indigo-500/15 dark:border-violet-400/20"
+        >
+          <div className="flex items-start gap-4">
+            <span className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-500 to-indigo-500 text-white shadow-[0_8px_24px_-8px_rgba(99,102,241,0.7)]">
+              <Sparkles className="size-6" />
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="text-[12px] font-semibold uppercase tracking-[0.06em] text-violet-700 dark:text-violet-300">
+                Try this
+              </p>
+              <p className="mt-0.5 text-[17px] font-semibold leading-tight text-zinc-900 dark:text-zinc-50">
+                &ldquo;Who do I know who knows VCs?&rdquo;
+              </p>
+              <p className="mt-1 text-[13px] text-zinc-600 dark:text-zinc-300">
+                Run it as an agent task — I&apos;ll suggest warm paths.
+              </p>
+            </div>
+            <ArrowRight className="size-5 text-zinc-500 dark:text-zinc-300" />
+          </div>
+        </GlassCard>
+      </Link>
+
+      {/* Recently added rail */}
+      <section className="flex flex-col gap-3">
+        <div className="flex items-center justify-between">
+          <h2 className="px-1 text-[12px] font-semibold uppercase tracking-[0.06em] text-zinc-500 dark:text-zinc-400">
+            Recently added
+          </h2>
+          <Link
+            href="/people"
+            className="text-[13px] font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-zinc-100"
+          >
+            See all
+          </Link>
+        </div>
+        <div className="-mx-5 flex gap-3 overflow-x-auto px-5 pb-1">
+          {recentlyAdded.map((c) => (
+            <RecentCard key={c.id} contact={c} />
+          ))}
+        </div>
+      </section>
+
+      {/* Network stat tiles */}
+      <GlassCard padding="md" className="flex items-stretch gap-3">
+        <NetworkStat
+          value={`${SAMPLE_CONTACTS.filter((c) => c.source === "apple-contacts").length}`}
+          label="From Apple"
+        />
+        <Divider />
+        <NetworkStat
+          value={`${SAMPLE_CONTACTS.filter((c) => c.source === "linkedin").length}`}
+          label="From LinkedIn"
+        />
+        <Divider />
+        <NetworkStat
+          value={`${overdue.length}`}
+          label="Overdue"
+          tone="warning"
+        />
+      </GlassCard>
     </main>
   );
 }
 
-function FeatureRow({
-  title,
-  description,
+function QuickAction({
+  href,
+  label,
+  glyph,
+  accent,
 }: {
-  title: string;
-  description: string;
+  href: string;
+  label: string;
+  glyph: React.ReactNode;
+  accent?: boolean;
 }) {
   return (
-    <li className="flex items-start gap-3">
+    <Link
+      href={href}
+      className={`flex h-20 flex-col items-center justify-center gap-1.5 rounded-2xl border backdrop-blur-2xl backdrop-saturate-150 transition-transform active:scale-[0.97] ${
+        accent
+          ? "border-violet-300/40 bg-gradient-to-br from-violet-500/15 to-indigo-500/15 text-zinc-900 dark:border-violet-400/20 dark:text-zinc-50"
+          : "border-white/40 bg-white/55 text-zinc-800 dark:border-white/10 dark:bg-white/[0.06] dark:text-zinc-100"
+      }`}
+    >
       <span
-        aria-hidden
-        className="mt-1.5 size-2 shrink-0 rounded-full bg-zinc-900 dark:bg-white"
+        className={`flex size-9 items-center justify-center rounded-xl ${
+          accent
+            ? "bg-gradient-to-br from-violet-500 to-indigo-500 text-white shadow-[0_6px_20px_-8px_rgba(99,102,241,0.7)]"
+            : "bg-zinc-900/8 text-zinc-700 dark:bg-white/10 dark:text-zinc-100"
+        }`}
+      >
+        {glyph}
+      </span>
+      <span className="text-[12px] font-medium leading-none">{label}</span>
+    </Link>
+  );
+}
+
+function CatchUpCard({ contact }: { contact: Contact }) {
+  const display = contact.nickname ?? contact.name;
+  const since = daysSinceLastContact(contact);
+  const due =
+    contact.checkInCadenceDays && since !== null
+      ? Math.max(0, since - contact.checkInCadenceDays)
+      : null;
+  return (
+    <Link
+      href={`/people/${contact.id}`}
+      className="flex h-44 w-44 shrink-0 flex-col items-center justify-between rounded-3xl border border-white/40 bg-white/55 p-4 backdrop-blur-2xl backdrop-saturate-150 transition-transform active:scale-[0.97] dark:border-white/10 dark:bg-white/[0.06]"
+    >
+      <Avatar
+        name={display}
+        src={contact.photoUrl}
+        seed={contact.id}
+        size="lg"
+        ring
       />
-      <div className="flex flex-col">
-        <span className="font-medium">{title}</span>
-        <span className="text-sm text-zinc-600 dark:text-zinc-400">
-          {description}
+      <div className="flex flex-col items-center text-center">
+        <span className="line-clamp-1 text-[15px] font-semibold text-zinc-900 dark:text-zinc-50">
+          {display}
+        </span>
+        <span className="line-clamp-1 text-[12px] text-zinc-500 dark:text-zinc-400">
+          {contact.headline ?? contact.meetingPlace?.label ?? "—"}
         </span>
       </div>
-    </li>
+      <div className="inline-flex items-center gap-1 rounded-full bg-amber-400/20 px-2 py-0.5 text-[11px] font-medium text-amber-700 dark:bg-amber-400/15 dark:text-amber-300">
+        <Clock className="size-3" />
+        {due !== null ? `${due}d overdue` : "Catch up"}
+      </div>
+    </Link>
   );
 }
 
-function Avatar({ name }: { name: string }) {
-  const initials = name
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase() ?? "")
-    .join("");
+function RecentCard({ contact }: { contact: Contact }) {
+  const display = contact.nickname ?? contact.name;
   return (
-    <span
-      aria-hidden
-      className="flex size-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-sky-200 to-violet-300 text-sm font-semibold text-zinc-800 ring-1 ring-inset ring-white/60 dark:from-sky-500/40 dark:to-violet-500/40 dark:text-white"
+    <Link
+      href={`/people/${contact.id}`}
+      className="flex h-44 w-44 shrink-0 flex-col items-center justify-between rounded-3xl border border-white/40 bg-white/55 p-4 backdrop-blur-2xl backdrop-saturate-150 transition-transform active:scale-[0.97] dark:border-white/10 dark:bg-white/[0.06]"
     >
-      {initials}
-    </span>
+      <Avatar
+        name={display}
+        src={contact.photoUrl}
+        seed={contact.id}
+        size="lg"
+        ring
+      />
+      <div className="flex flex-col items-center text-center">
+        <span className="line-clamp-1 text-[15px] font-semibold text-zinc-900 dark:text-zinc-50">
+          {display}
+        </span>
+        <span className="line-clamp-1 text-[12px] text-zinc-500 dark:text-zinc-400">
+          {contact.headline ?? contact.meetingPlace?.label ?? "—"}
+        </span>
+      </div>
+      <GlassPill tone="info">
+        Added {formatRelative(contact.createdAt)} ago
+      </GlassPill>
+    </Link>
   );
 }
 
-/** Lightweight relative-time formatter — avoids pulling in a date lib. */
-function formatRelative(iso: string): string {
-  const then = new Date(iso).getTime();
-  if (Number.isNaN(then)) return "";
-  const deltaSeconds = Math.round((Date.now() - then) / 1000);
-  const minutes = Math.round(deltaSeconds / 60);
-  const hours = Math.round(deltaSeconds / 3600);
-  const days = Math.round(deltaSeconds / 86400);
-  const weeks = Math.round(days / 7);
-  const months = Math.round(days / 30);
-  if (minutes < 60) return `${minutes}m`;
-  if (hours < 24) return `${hours}h`;
-  if (days < 14) return `${days}d`;
-  if (weeks < 8) return `${weeks}w`;
-  return `${months}mo`;
+function NetworkStat({
+  value,
+  label,
+  tone = "neutral",
+}: {
+  value: string;
+  label: string;
+  tone?: "neutral" | "warning";
+}) {
+  return (
+    <div className="flex flex-1 flex-col items-center justify-center gap-0.5 py-1">
+      <span
+        className={`text-2xl font-semibold tabular-nums ${
+          tone === "warning"
+            ? "text-amber-600 dark:text-amber-300"
+            : "text-zinc-900 dark:text-zinc-50"
+        }`}
+      >
+        {value}
+      </span>
+      <span className="text-[11px] text-zinc-500 dark:text-zinc-400">
+        {label}
+      </span>
+    </div>
+  );
+}
+
+function Divider() {
+  return (
+    <div
+      aria-hidden
+      className="w-px self-stretch bg-zinc-900/10 dark:bg-white/10"
+    />
+  );
 }

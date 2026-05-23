@@ -8,7 +8,8 @@ import type { Contact } from "@/types/contact";
 interface AppleMapProps {
   /**
    * Contacts to drop pins for. Each contact with a `meetingPlace` becomes
-   * a MarkerAnnotation; contacts without a place are ignored.
+   * a custom photo-bubble annotation; contacts without a place are
+   * silently skipped.
    */
   contacts: Contact[];
   /**
@@ -16,6 +17,10 @@ interface AppleMapProps {
    * the selected annotation. The parent can render a callout card.
    */
   onSelectContact?: (contactId: string) => void;
+  /**
+   * Color scheme override. By default we follow `prefers-color-scheme`.
+   */
+  colorScheme?: "light" | "dark" | "auto";
 }
 
 type Status =
@@ -25,11 +30,18 @@ type Status =
   | { kind: "error"; message: string };
 
 /**
- * Renders Apple's native MapKit JS with one iOS-style `MarkerAnnotation`
- * per contact. Authorization is fetched lazily from `/api/mapkit/token`
- * so the component degrades gracefully when MapKit env vars are missing.
+ * Apple-native MapKit JS map with custom DOM annotations that look like
+ * the photo bubbles in the inspiration (Mesh-style). MapKit handles the
+ * clustering math; we just provide a factory function for the DOM.
+ *
+ * Authorization is fetched lazily from `/api/mapkit/token` so the
+ * component degrades gracefully when MapKit env vars are missing.
  */
-export function AppleMap({ contacts, onSelectContact }: AppleMapProps) {
+export function AppleMap({
+  contacts,
+  onSelectContact,
+  colorScheme = "auto",
+}: AppleMapProps) {
   const containerRef = React.useRef<HTMLDivElement | null>(null);
   const mapRef = React.useRef<unknown>(null);
   const [status, setStatus] = React.useState<Status>({ kind: "loading" });
@@ -50,33 +62,17 @@ export function AppleMap({ contacts, onSelectContact }: AppleMapProps) {
         });
         if (cancelled) return;
 
-        const annotations = contacts
-          .filter((c) => c.meetingPlace)
-          .map((c) => {
-            const place = c.meetingPlace!;
-            const coordinate = new mapkit.Coordinate(
-              place.latitude,
-              place.longitude,
-            );
-            const annotation = new mapkit.MarkerAnnotation(coordinate, {
-              title: c.nickname ?? c.name,
-              subtitle: place.label,
-              color: "#0a84ff",
-              glyphColor: "#ffffff",
-              glyphText: initialsFor(c.nickname ?? c.name),
-              selected: false,
-            });
-            (annotation as { data?: unknown }).data = { contactId: c.id };
-            annotation.addEventListener("select", () => {
-              onSelectContact?.(c.id);
-            });
-            return annotation;
-          });
+        const resolvedScheme =
+          colorScheme === "auto"
+            ? prefersDark()
+              ? mapkit.Map.ColorSchemes.Dark
+              : mapkit.Map.ColorSchemes.Light
+            : colorScheme === "dark"
+              ? mapkit.Map.ColorSchemes.Dark
+              : mapkit.Map.ColorSchemes.Light;
 
         const map = new mapkit.Map(containerEl, {
-          colorScheme: prefersDark()
-            ? mapkit.Map.ColorSchemes.Dark
-            : mapkit.Map.ColorSchemes.Light,
+          colorScheme: resolvedScheme,
           showsCompass: mapkit.FeatureVisibility.Adaptive,
           showsZoomControl: false,
           showsMapTypeControl: false,
@@ -91,13 +87,62 @@ export function AppleMap({ contacts, onSelectContact }: AppleMapProps) {
           }),
         });
 
+        const annotations = contacts
+          .filter((c) => c.meetingPlace)
+          .map((c) => {
+            const place = c.meetingPlace!;
+            const coordinate = new mapkit.Coordinate(
+              place.latitude,
+              place.longitude,
+            );
+            const display = c.nickname ?? c.name;
+            const annotation = new mapkit.Annotation(
+              coordinate,
+              () => buildPhotoBubble(c),
+              {
+                title: display,
+                subtitle: place.label,
+                anchorOffset: new DOMPoint(0, -8),
+                displayPriority: 750,
+                clusteringIdentifier: "contacts",
+              },
+            );
+            (annotation as { data?: unknown }).data = { contactId: c.id };
+            annotation.addEventListener("select", () => {
+              onSelectContact?.(c.id);
+            });
+            return annotation;
+          });
+
+        // Provide a custom cluster annotation factory so groups also use
+        // the Mesh-style bubble look (avatar stack + count badge).
+        map.annotationForCluster = (clusterAnnotation: unknown) => {
+          const cluster = clusterAnnotation as {
+            coordinate: unknown;
+            memberAnnotations: Array<{
+              data?: { contactId?: string };
+            }>;
+          };
+          const members = cluster.memberAnnotations
+            .map((m) => contacts.find((c) => c.id === m.data?.contactId))
+            .filter((c): c is Contact => Boolean(c));
+          return new mapkit.Annotation(
+            cluster.coordinate as never,
+            () => buildClusterBubble(members),
+            {
+              displayPriority: 1000,
+              anchorOffset: new DOMPoint(0, -8),
+            },
+          );
+        };
+
         if (annotations.length > 0) {
           map.showItems(annotations, {
             animate: true,
             padding: new mapkit.Padding({
-              top: 32,
+              top: 80,
               right: 32,
-              bottom: 140,
+              bottom: 200,
               left: 32,
             }),
           });
@@ -130,20 +175,208 @@ export function AppleMap({ contacts, onSelectContact }: AppleMapProps) {
       if (existing?.destroy) existing.destroy();
       mapRef.current = null;
     };
-  }, [contacts, onSelectContact]);
+  }, [contacts, onSelectContact, colorScheme]);
 
   return (
-    <div className="relative h-full w-full overflow-hidden rounded-3xl bg-zinc-100 dark:bg-zinc-900">
+    <div className="relative h-full w-full overflow-hidden bg-zinc-100 dark:bg-zinc-900">
       <div ref={containerRef} className="h-full w-full" />
-      {status.kind !== "ready" && (
-        <MapOverlay status={status} />
-      )}
+      {status.kind !== "ready" && <MapOverlay status={status} />}
     </div>
   );
 }
 
+/* -------------------------------------------------------------------------- */
+/* DOM annotation builders                                                    */
+/* -------------------------------------------------------------------------- */
+
+const BUBBLE_SIZE = 48;
+
+function buildPhotoBubble(contact: Contact): HTMLElement {
+  const el = document.createElement("div");
+  el.className = "crm-photo-pin";
+  el.style.cssText = bubbleBaseStyle();
+
+  const inner = document.createElement("div");
+  inner.style.cssText = bubbleInnerStyle();
+
+  if (contact.photoUrl) {
+    const img = document.createElement("img");
+    img.src = contact.photoUrl;
+    img.alt = "";
+    img.loading = "lazy";
+    img.style.cssText = "width:100%;height:100%;object-fit:cover;display:block;";
+    img.onerror = () => {
+      img.replaceWith(makeInitialsTile(contact));
+    };
+    inner.appendChild(img);
+  } else {
+    inner.appendChild(makeInitialsTile(contact));
+  }
+
+  el.appendChild(inner);
+  return el;
+}
+
+function makeInitialsTile(contact: Contact): HTMLElement {
+  const tile = document.createElement("div");
+  const initials = initialsFor(contact.nickname ?? contact.name);
+  const gradient = pickGradientCss(contact.id);
+  tile.textContent = initials;
+  tile.style.cssText = [
+    "width:100%",
+    "height:100%",
+    "display:flex",
+    "align-items:center",
+    "justify-content:center",
+    "font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',Inter,sans-serif",
+    "font-weight:600",
+    "font-size:15px",
+    "color:rgba(15,23,42,0.85)",
+    `background-image:${gradient}`,
+  ].join(";");
+  return tile;
+}
+
+function buildClusterBubble(members: Contact[]): HTMLElement {
+  const el = document.createElement("div");
+  el.style.cssText = clusterContainerStyle();
+
+  const stack = document.createElement("div");
+  stack.style.cssText = clusterStackStyle();
+
+  // Up to 3 overlapped avatars
+  const preview = members.slice(0, 3);
+  preview.forEach((m, i) => {
+    const slot = document.createElement("div");
+    slot.style.cssText = [
+      `width:${BUBBLE_SIZE - 6}px`,
+      `height:${BUBBLE_SIZE - 6}px`,
+      "border-radius:9999px",
+      "overflow:hidden",
+      "background:linear-gradient(135deg,#e2e8f0,#cbd5e1)",
+      "border:2px solid rgba(255,255,255,0.95)",
+      "box-shadow:0 2px 8px rgba(15,23,42,0.25)",
+      `margin-left:${i === 0 ? "0" : "-18px"}`,
+      `z-index:${10 - i}`,
+      "position:relative",
+    ].join(";");
+
+    if (m.photoUrl) {
+      const img = document.createElement("img");
+      img.src = m.photoUrl;
+      img.alt = "";
+      img.loading = "lazy";
+      img.style.cssText = "width:100%;height:100%;object-fit:cover;display:block;";
+      img.onerror = () => img.replaceWith(makeInitialsTile(m));
+      slot.appendChild(img);
+    } else {
+      slot.appendChild(makeInitialsTile(m));
+    }
+    stack.appendChild(slot);
+  });
+
+  el.appendChild(stack);
+
+  // Count badge
+  const badge = document.createElement("div");
+  badge.textContent = String(members.length);
+  badge.style.cssText = [
+    "position:absolute",
+    "right:-6px",
+    "bottom:-6px",
+    "min-width:22px",
+    "height:22px",
+    "padding:0 6px",
+    "border-radius:11px",
+    "background:rgba(15,23,42,0.85)",
+    "color:#fff",
+    "font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',Inter,sans-serif",
+    "font-weight:600",
+    "font-size:11px",
+    "display:flex",
+    "align-items:center",
+    "justify-content:center",
+    "border:1.5px solid rgba(255,255,255,0.95)",
+    "backdrop-filter:blur(8px) saturate(150%)",
+    "-webkit-backdrop-filter:blur(8px) saturate(150%)",
+  ].join(";");
+  el.appendChild(badge);
+
+  return el;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Styling helpers                                                            */
+/* -------------------------------------------------------------------------- */
+
+function bubbleBaseStyle(): string {
+  return [
+    `width:${BUBBLE_SIZE}px`,
+    `height:${BUBBLE_SIZE}px`,
+    "position:relative",
+    "transform:translate(-50%,-100%)",
+    "cursor:pointer",
+    "transition:transform 0.15s ease-out",
+  ].join(";");
+}
+
+function bubbleInnerStyle(): string {
+  return [
+    "width:100%",
+    "height:100%",
+    "border-radius:9999px",
+    "overflow:hidden",
+    "border:3px solid rgba(255,255,255,0.95)",
+    "box-shadow:0 4px 14px rgba(15,23,42,0.35),0 2px 4px rgba(15,23,42,0.2)",
+    "background:linear-gradient(135deg,#e2e8f0,#cbd5e1)",
+  ].join(";");
+}
+
+function clusterContainerStyle(): string {
+  return [
+    "position:relative",
+    "transform:translate(-50%,-100%)",
+    "cursor:pointer",
+    "filter:drop-shadow(0 6px 18px rgba(15,23,42,0.3))",
+  ].join(";");
+}
+
+function clusterStackStyle(): string {
+  return ["display:flex", "align-items:center"].join(";");
+}
+
+/* -------------------------------------------------------------------------- */
+/* Helpers                                                                    */
+/* -------------------------------------------------------------------------- */
+
+const GRADIENT_CSS = [
+  "linear-gradient(135deg,#7dd3fc,#a78bfa)",
+  "linear-gradient(135deg,#6ee7b7,#22d3ee)",
+  "linear-gradient(135deg,#f9a8d4,#c084fc)",
+  "linear-gradient(135deg,#fcd34d,#fb7185)",
+  "linear-gradient(135deg,#5eead4,#818cf8)",
+  "linear-gradient(135deg,#f0abfc,#38bdf8)",
+  "linear-gradient(135deg,#bef264,#34d399)",
+  "linear-gradient(135deg,#fdba74,#f472b6)",
+];
+
+function pickGradientCss(seed: string): string {
+  let hash = 0;
+  for (let i = 0; i < seed.length; i += 1)
+    hash = (hash * 31 + seed.charCodeAt(i)) >>> 0;
+  return GRADIENT_CSS[hash % GRADIENT_CSS.length]!;
+}
+
+function initialsFor(name: string): string {
+  return name
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((p) => p[0]?.toUpperCase() ?? "")
+    .join("");
+}
+
 function MapOverlay({ status }: { status: Status }) {
-  if (status.kind === "ready") return null;
   const title =
     status.kind === "loading"
       ? "Loading map…"
@@ -177,11 +410,6 @@ class MapKitConfigMissingError extends Error {
   }
 }
 
-/**
- * Fetch a short-lived MapKit JS token from our own backend. A 503 means
- * credentials aren't configured yet — surface that as an empty state
- * rather than a generic error.
- */
 async function fetchToken(): Promise<string> {
   const response = await fetch("/api/mapkit/token", {
     cache: "no-store",
@@ -200,21 +428,11 @@ async function fetchToken(): Promise<string> {
     throw new Error(`Token request failed (HTTP ${response.status}).`);
   }
   const data = (await response.json()) as { token?: string };
-  if (!data.token) {
-    throw new Error("Token response was empty.");
-  }
+  if (!data.token) throw new Error("Token response was empty.");
   return data.token;
 }
 
 function prefersDark(): boolean {
   if (typeof window === "undefined") return false;
   return window.matchMedia?.("(prefers-color-scheme: dark)").matches ?? false;
-}
-
-function initialsFor(name: string): string {
-  const parts = name.trim().split(/\s+/).slice(0, 2);
-  return parts
-    .map((p) => p[0]?.toUpperCase() ?? "")
-    .join("")
-    .slice(0, 2);
 }
