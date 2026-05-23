@@ -32,6 +32,7 @@ export type ContactSource =
   | "linkedin"
   | "instagram"
   | "imessage"
+  | "audio"
   | "manual";
 
 /**
