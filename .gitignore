@@ -37,6 +37,13 @@ yarn-error.log*
 .env.*
 !.env.example
 
+# Cryptographic key material — never commit. Apple .p8 files, generic PEM
+# keys, and the `gitignore/` folder that Cursor uses for attached files.
+*.p8
+*.pem
+*.key
+gitignore/
+
 # vercel
 .vercel
 
