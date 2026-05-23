@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 
+import { GlassNavBar } from "@/components/glass";
+
 import "./globals.css";
 
 const geistSans = Geist({
@@ -36,7 +38,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   viewportFit: "cover",
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: light)", color: "#f6f7fb" },
     { media: "(prefers-color-scheme: dark)", color: "#0a0a0a" },
   ],
 };
@@ -51,8 +53,12 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-dvh bg-background text-foreground flex flex-col font-sans">
+      <body className="min-h-dvh font-sans text-foreground">
+        {/* Decorative mesh-gradient background. Lives behind everything so
+            our glass surfaces have rich content to refract. */}
+        <div aria-hidden className="app-bg" />
         {children}
+        <GlassNavBar />
       </body>
     </html>
   );

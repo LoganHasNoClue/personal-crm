@@ -13,19 +13,31 @@ Eazo's compatibility requirements out of the box.
 
 - **Framework:** [Next.js](https://nextjs.org) (App Router) — see `package.json` for the exact version.
 - **Language:** TypeScript in `strict` mode.
-- **Styling:** [Tailwind CSS v4](https://tailwindcss.com).
+- **Styling:** [Tailwind CSS v4](https://tailwindcss.com) with a liquid-glass design system (see `src/components/glass/`).
+- **Maps:** Apple's native [MapKit JS](https://developer.apple.com/maps/web/) via `@apple/mapkit-loader`. Tokens are signed server-side with `jose`.
 - **Package manager:** `npm` (works with `bun` too — both produce a compatible build).
 
 ## Project structure
 
 ```
 src/
-  app/            # App Router routes, layouts, and API handlers
-    api/          # Route handlers (server-only HTTP endpoints)
-  components/     # Shared React UI components
-  lib/            # Utilities, helpers, third-party client setup
-  types/          # Shared TypeScript types and interfaces
-public/           # Static assets served as-is
+  app/                  # App Router routes, layouts, and API handlers
+    api/                # Route handlers (server-only HTTP endpoints)
+      health/           # Liveness probe (no external deps)
+      mapkit/token/     # Signs short-lived MapKit JS authorization JWTs
+    contacts/           # /contacts list screen
+    map/                # /map screen + MapView client component
+  components/
+    glass/              # Liquid-glass design primitives
+                        #   GlassCard · GlassButton · GlassPill · GlassNavBar
+    map/                # AppleMap client wrapper around MapKit JS
+  lib/                  # Utilities and helpers
+    cn.ts               # Tiny class-name combiner
+    env.ts              # Lazy, throw-free env var access
+    mapkit-token.ts     # ES256 JWT signer for MapKit JS
+    sample-contacts.ts  # In-memory placeholder data
+  types/                # Shared TypeScript types and interfaces
+public/                 # Static assets served as-is
 ```
 
 ## Getting started
@@ -73,6 +85,22 @@ fill in the values for local development.
 | --------------------- | --------------- | ------------- | --------------------------------------------------------------------------- |
 | `NEXT_PUBLIC_APP_URL` | Recommended     | Client+Server | Public base URL of the deployed app, used for absolute links and OG tags.   |
 | `DATABASE_URL`        | When DB is wired up | Server only | Connection string for the primary relational database (e.g. Postgres).      |
+| `MAPKIT_TEAM_ID`      | For `/map`      | Server only   | 10-character Apple Developer Team ID. Used as the JWT `iss` claim.          |
+| `MAPKIT_KEY_ID`       | For `/map`      | Server only   | 10-character Key ID of the MapKit JS-enabled key you created in Apple's portal. |
+| `MAPKIT_PRIVATE_KEY`  | For `/map`      | Server only   | Contents of the `.p8` private key (PKCS8 PEM, single- or multi-line).        |
+
+### Getting MapKit credentials
+
+The `/map` page uses Apple's official [MapKit JS](https://developer.apple.com/maps/web/) SDK and needs three credentials from your Apple Developer account:
+
+1. Go to <https://developer.apple.com/account/resources/identifiers/list/maps> and create a **Maps ID** (any unique identifier, e.g. `maps.com.yourapp.personal-crm`).
+2. Go to <https://developer.apple.com/account/resources/authkeys/list>, create a new key, enable **MapKit JS**, associate the Maps ID, and download the resulting `.p8` file. **You can only download it once.**
+3. Copy the values into `.env.local`:
+   - `MAPKIT_TEAM_ID` — your 10-character Team ID (top-right of the Developer portal).
+   - `MAPKIT_KEY_ID` — the 10-character ID shown next to the key you just created.
+   - `MAPKIT_PRIVATE_KEY` — paste the full contents of the `.p8` file (including the `-----BEGIN/END PRIVATE KEY-----` lines). For single-line envs, encode line breaks as `\n`.
+
+If any of the three are missing, `/api/mapkit/token` returns `503` and the `/map` page renders a friendly "configure credentials" empty state — the rest of the app keeps working.
 
 ### Rules of thumb
 
