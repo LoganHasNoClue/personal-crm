@@ -27,10 +27,10 @@ export default function MorePage() {
           </span>
           <div className="flex flex-col">
             <p className="text-[15px] font-semibold text-zinc-900 dark:text-zinc-50">
-              Personal CRM Pro
+              Perso Pro
             </p>
             <p className="text-[13px] text-zinc-600 dark:text-zinc-300">
-              Unlimited Nexus prompts &amp; advanced agents.
+              Unlimited Ember prompts &amp; advanced agents.
             </p>
           </div>
         </div>

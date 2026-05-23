@@ -10,7 +10,7 @@ interface ChatBubbleProps {
 
 /**
  * iMessage-style chat bubble. User messages float right in iOS blue; the
- * AI assistant ("Nexus") replies float left in a frosted bubble. Use
+ * AI assistant ("Ember") replies float left in a frosted bubble. Use
  * shared corners so consecutive bubbles from the same author group.
  */
 export function ChatBubble({ role, children, className }: ChatBubbleProps) {

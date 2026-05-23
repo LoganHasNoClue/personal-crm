@@ -25,7 +25,7 @@ const items: NavItem[] = [
   { href: "/people", label: "People", icon: SquareUserRound, matchPrefix: "/people" },
   { href: "/add", label: "Add", icon: Plus, matchPrefix: "/add", primary: true },
   { href: "/search", label: "Search", icon: Search, matchPrefix: "/search" },
-  { href: "/chat", label: "Nexus", icon: Sparkles, matchPrefix: "/chat" },
+  { href: "/chat", label: "Ember", icon: Sparkles, matchPrefix: "/chat" },
 ];
 
 /**

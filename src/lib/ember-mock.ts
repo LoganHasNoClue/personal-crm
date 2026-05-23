@@ -7,7 +7,7 @@ import {
 import type { Contact } from "@/types/contact";
 
 /**
- * A single message in a Nexus conversation. The assistant variant may
+ * A single message in an Ember conversation. The assistant variant may
  * carry a *structured* payload so the UI can render bullets, numbered
  * lists, and contact references richly — matching the inspiration's
  * numbered-recommendation style.
@@ -18,24 +18,24 @@ export type ChatMessage =
       id: string;
       role: "assistant";
       text?: string;
-      payload?: NexusAnswer;
+      payload?: EmberAnswer;
     };
 
 /** Structured assistant response. */
-export interface NexusAnswer {
+export interface EmberAnswer {
   /** Optional small header pill, e.g. "Asking about Joshua". */
   tag?: string;
   /** Short framing paragraph displayed above the cards. */
   intro: string;
   /** Numbered cards with a title and bullets. */
-  cards: NexusCard[];
+  cards: EmberCard[];
   /** Optional inline contact references shown at the bottom. */
   references?: ContactReference[];
   /** Optional follow-up prompts the user can tap to ask. */
   followUps?: string[];
 }
 
-export interface NexusCard {
+export interface EmberCard {
   title: string;
   bullets: string[];
 }
@@ -52,7 +52,7 @@ const makeId = (prefix: string) => {
 };
 
 /**
- * Generate a mock Nexus reply. Uses very light pattern matching so the
+ * Generate a mock Ember reply. Uses very light pattern matching so the
  * demo feels responsive and contextual without actually running an LLM.
  */
 export function generateMockResponse(
@@ -232,13 +232,13 @@ export function generateMockResponse(
     if (match) return contactDeepDive(match);
   }
 
-  // 5) Default — friendly fallback that explains what Nexus does
+  // 5) Default — friendly fallback that explains what Ember does
   return {
     id: makeId("a"),
     role: "assistant",
     payload: {
       intro:
-        "I'm a relationship agent — I can help you stay in touch, answer questions across your network, draft intro emails, and pull in info about people you haven't met yet. Try one of these:",
+        "I'm Ember — your friendship sidekick. I can help you stay in touch, answer questions across your network, draft a check-in message, and pull in info about people you haven't met yet. Try one of these:",
       cards: [
         {
           title: "Things I'm good at today",
@@ -344,7 +344,7 @@ function formatLastContact(contact: Contact): string {
 }
 
 /** Greet the user with an opening message. */
-export function nexusOpener(contact: Contact | null): ChatMessage {
+export function emberOpener(contact: Contact | null): ChatMessage {
   if (contact) {
     const display = contact.nickname ?? contact.name;
     return {
@@ -356,7 +356,7 @@ export function nexusOpener(contact: Contact | null): ChatMessage {
   return {
     id: makeId("a"),
     role: "assistant",
-    text: "Hey, I'm Nexus. Ask me about anyone in your network — or give me an agent task, like \"find me a path to a seed VC\" or \"who should I catch up with this week?\"",
+    text: "Hey, I'm Ember — your friendship sidekick. Ask me who you should check in on, what you talked about last time you saw someone, or who in your circle might know the person you're trying to meet.",
   };
 }
 

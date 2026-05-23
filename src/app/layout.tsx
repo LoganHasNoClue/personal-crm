@@ -17,15 +17,15 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "Personal CRM",
-    template: "%s · Personal CRM",
+    default: "Perso",
+    template: "%s · Perso",
   },
   description:
-    "A relationship-first CRM. Remember names, follow up with friends, and never lose touch with the people who matter.",
-  applicationName: "Personal CRM",
+    "Perso is a friendship-first CRM. Remember names, follow up with friends, and never lose touch with the people who matter.",
+  applicationName: "Perso",
   appleWebApp: {
     capable: true,
-    title: "Personal CRM",
+    title: "Perso",
     statusBarStyle: "black-translucent",
   },
   formatDetection: {

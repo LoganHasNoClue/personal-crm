@@ -48,7 +48,7 @@ export default function Home() {
       <div className="grid grid-cols-3 gap-2">
         <QuickAction
           href="/chat"
-          label="Ask Nexus"
+          label="Ask Ember"
           glyph={<Sparkles className="size-5" />}
           accent
         />
@@ -86,7 +86,7 @@ export default function Home() {
         </section>
       )}
 
-      {/* Nexus call-to-action card */}
+      {/* Ember call-to-action card */}
       <Link
         href="/chat?q=Who+should+I+check+in+on%3F"
         className="contents"

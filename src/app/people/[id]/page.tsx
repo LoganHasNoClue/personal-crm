@@ -129,7 +129,7 @@ export default async function PersonDetailPage({
         />
         <ActionTile
           icon={<Sparkles className="size-5" />}
-          label="Ask Nexus"
+          label="Ask Ember"
           href={`/chat/${contact.id}`}
           enabled
         />
@@ -246,7 +246,7 @@ export default async function PersonDetailPage({
           className="mb-2 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-br from-violet-500 to-indigo-500 px-5 py-3.5 text-[15px] font-semibold text-white shadow-[0_8px_24px_-8px_rgba(99,102,241,0.6)] active:scale-[0.98] transition-transform"
         >
           <Sparkles className="size-4" />
-          Ask Nexus about {display}
+          Ask Ember about {display}
         </button>
       </Link>
     </main>

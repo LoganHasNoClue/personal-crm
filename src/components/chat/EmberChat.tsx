@@ -8,15 +8,15 @@ import { GlassPill } from "@/components/glass";
 import { Avatar, ChatBubble, ThinkingDots } from "@/components/ui";
 import {
   type ChatMessage,
-  type NexusAnswer,
+  type EmberAnswer,
   generateMockResponse,
   makeUserMessage,
-  nexusOpener,
-} from "@/lib/nexus-mock";
+  emberOpener,
+} from "@/lib/ember-mock";
 import { findSampleContact } from "@/lib/sample-contacts";
 import type { Contact } from "@/types/contact";
 
-interface NexusChatProps {
+interface EmberChatProps {
   /** Optional contact to scope the chat to. */
   contact?: Contact | null;
   /** Initial prompt to pre-fill or auto-submit (from a search query). */
@@ -24,13 +24,13 @@ interface NexusChatProps {
 }
 
 /**
- * The Nexus conversation surface. Renders an iMessage-style transcript,
+ * The Ember conversation surface. Renders an iMessage-style transcript,
  * a thinking indicator while the (mock) agent "works", and a pinned
  * composer at the bottom of the viewport — above the bottom nav.
  */
-export function NexusChat({ contact = null, initialQuery }: NexusChatProps) {
+export function EmberChat({ contact = null, initialQuery }: EmberChatProps) {
   const [messages, setMessages] = React.useState<ChatMessage[]>(() => [
-    nexusOpener(contact ?? null),
+    emberOpener(contact ?? null),
   ]);
   const [input, setInput] = React.useState(initialQuery ?? "");
   const [thinking, setThinking] = React.useState(false);
@@ -47,8 +47,8 @@ export function NexusChat({ contact = null, initialQuery }: NexusChatProps) {
       setThinking(true);
       setThinkingLabel(
         contact
-          ? `Asking Nexus a question about ${contact.nickname ?? contact.name}`
-          : "Nexus is thinking",
+          ? `Asking Ember about ${contact.nickname ?? contact.name}`
+          : "Ember is thinking",
       );
       // Mock latency to make the "thinking" state visible. Real network
       // would simply replace this `setTimeout`.
@@ -97,7 +97,7 @@ export function NexusChat({ contact = null, initialQuery }: NexusChatProps) {
         placeholder={
           contact
             ? `Ask about ${contact.nickname ?? contact.name}…`
-            : "Ask Nexus anything…"
+            : "Ask Ember anything…"
         }
       />
     </div>
@@ -116,7 +116,7 @@ function MessageView({ message }: { message: ChatMessage }) {
   return <ChatBubble role="assistant">{message.text}</ChatBubble>;
 }
 
-function AssistantAnswer({ answer }: { answer: NexusAnswer }) {
+function AssistantAnswer({ answer }: { answer: EmberAnswer }) {
   return (
     <div className="flex w-full max-w-full flex-col gap-3">
       {answer.tag && (
@@ -211,7 +211,7 @@ function FollowUpRow({ follows }: { follows: string[] }) {
             // Composer can capture and submit it without prop drilling
             // through every render path. The dispatch target is the
             // global window for simplicity in v1.
-            const ev = new CustomEvent("nexus-followup", {
+            const ev = new CustomEvent("ember-followup", {
               detail: text,
             });
             window.dispatchEvent(ev);
@@ -244,9 +244,9 @@ function Composer({
       // Allow the value to settle before submitting
       window.setTimeout(() => onSubmit(), 30);
     }
-    window.addEventListener("nexus-followup", handle as EventListener);
+    window.addEventListener("ember-followup", handle as EventListener);
     return () =>
-      window.removeEventListener("nexus-followup", handle as EventListener);
+      window.removeEventListener("ember-followup", handle as EventListener);
   }, [onChange, onSubmit]);
 
   return (

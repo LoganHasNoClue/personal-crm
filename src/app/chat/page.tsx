@@ -1,10 +1,10 @@
 import { Sparkles } from "lucide-react";
 
-import { NexusChat } from "@/components/chat/NexusChat";
+import { EmberChat } from "@/components/chat/EmberChat";
 import { IconButton, NavBar } from "@/components/ui";
 
 export const metadata = {
-  title: "Nexus",
+  title: "Ember",
 };
 
 interface SearchParams {
@@ -20,15 +20,15 @@ export default async function ChatPage({
   return (
     <main className="app-shell mx-auto flex w-full max-w-md flex-1 flex-col gap-4 px-5 pt-10 sm:max-w-lg sm:pt-14">
       <NavBar
-        title="Nexus"
-        subtitle="Your relationship agent"
+        title="Ember"
+        subtitle="Your friendship sidekick"
         trailing={
-          <IconButton variant="tinted" size="md" label="About Nexus">
+          <IconButton variant="tinted" size="md" label="About Ember">
             <Sparkles />
           </IconButton>
         }
       />
-      <NexusChat initialQuery={q} />
+      <EmberChat initialQuery={q} />
     </main>
   );
 }

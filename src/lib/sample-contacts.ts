@@ -139,7 +139,7 @@ export const SAMPLE_CONTACTS: Contact[] = [
     updatedAt: daysAgo(82),
   },
   // -------------------------------------------------------------------------
-  // Investor / founder cluster — used by the "who knows VCs" Nexus prompt.
+  // Investor / founder cluster — used by the "who knows VCs" Ember prompt.
   // -------------------------------------------------------------------------
   {
     id: "c_jacqueline",

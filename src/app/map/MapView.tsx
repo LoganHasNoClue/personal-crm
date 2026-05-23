@@ -107,7 +107,7 @@ export function MapView() {
                     className="inline-flex h-9 items-center gap-1 rounded-full border border-violet-300/40 bg-gradient-to-br from-violet-500/15 to-indigo-500/15 px-3 text-[13px] font-medium text-violet-700 active:scale-[0.97] dark:border-violet-400/30 dark:text-violet-300"
                   >
                     <Sparkles className="size-3.5" />
-                    Ask Nexus
+                    Ask Ember
                   </Link>
                 </div>
               </div>

@@ -28,11 +28,30 @@ interface CannedQuery {
  */
 const CANNED: CannedQuery[] = [
   {
-    id: "vcs",
-    label: "Who do I know who knows VCs?",
-    description: "Contacts tagged as investors",
+    id: "overdue",
+    label: "Who should I check in on?",
+    description: "Past their check-in cadence",
+    predicate: (c) => {
+      if (!c.checkInCadenceDays || !c.lastContactedAt) return false;
+      const since = (Date.now() - new Date(c.lastContactedAt).getTime()) /
+        86_400_000;
+      return since > c.checkInCadenceDays;
+    },
+  },
+  {
+    id: "closest",
+    label: "My closest friends",
+    description: "Best friends & partner",
     predicate: (c) =>
-      (c.tags ?? []).some((t) => ["investor", "vc", "solo-gp"].includes(t)),
+      (c.tags ?? []).some((t) =>
+        ["best-friend", "partner"].includes(t),
+      ),
+  },
+  {
+    id: "family",
+    label: "Family",
+    description: "People I never want to neglect",
+    predicate: (c) => (c.tags ?? []).includes("family"),
   },
   {
     id: "recent",
@@ -50,21 +69,11 @@ const CANNED: CannedQuery[] = [
     predicate: (c) => (c.tags ?? []).includes("founder"),
   },
   {
-    id: "overdue",
-    label: "I haven't talked to in a while",
-    description: "Past their check-in cadence",
-    predicate: (c) => {
-      if (!c.checkInCadenceDays || !c.lastContactedAt) return false;
-      const since = (Date.now() - new Date(c.lastContactedAt).getTime()) /
-        86_400_000;
-      return since > c.checkInCadenceDays;
-    },
-  },
-  {
-    id: "family",
-    label: "Family",
-    description: "People I never want to neglect",
-    predicate: (c) => (c.tags ?? []).includes("family"),
+    id: "vcs",
+    label: "Who do I know who knows VCs?",
+    description: "Investors + warm-intro paths",
+    predicate: (c) =>
+      (c.tags ?? []).some((t) => ["investor", "vc", "solo-gp"].includes(t)),
   },
 ];
 
@@ -99,7 +108,7 @@ export function SearchView() {
     <main className="app-shell mx-auto flex w-full max-w-md flex-col gap-6 px-5 pt-10 sm:max-w-lg sm:pt-14">
       <NavBar
         title="Search"
-        subtitle="Find anyone, or ask Nexus a question"
+        subtitle="Find anyone, or ask Ember a question"
       />
 
       <SearchField
@@ -152,7 +161,7 @@ export function SearchView() {
         </div>
       </section>
 
-      {/* Ask Nexus pivot — appears whenever there's any input. */}
+      {/* Ask Ember pivot — appears whenever there's any input. */}
       {(trimmed.length > 0 || canned) && (
         <Link
           href={{
@@ -166,10 +175,10 @@ export function SearchView() {
           </span>
           <span className="min-w-0 flex-1">
             <span className="block truncate font-semibold text-zinc-900 dark:text-zinc-50">
-              Ask Nexus: &ldquo;{canned ? canned.label : query}&rdquo;
+              Ask Ember: &ldquo;{canned ? canned.label : query}&rdquo;
             </span>
             <span className="block text-[12px] text-zinc-500 dark:text-zinc-400">
-              Run this as an agent task across your network.
+              I&apos;ll dig through your circle and bring back an answer.
             </span>
           </span>
         </Link>
@@ -203,7 +212,7 @@ export function SearchView() {
 
       {trimmed.length > 0 && results.length === 0 && !canned && (
         <p className="px-1 text-[14px] text-zinc-500 dark:text-zinc-400">
-          No matches in your network. Try asking Nexus instead — it can pull
+          No matches in your network. Try asking Ember instead — I can pull
           in people you haven&apos;t added yet.
         </p>
       )}

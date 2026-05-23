@@ -1,9 +1,11 @@
-# Personal CRM
+# Perso
 
-A relationship-first CRM — a CRM for the **people** in your life instead of
-companies. It helps you remember names and context, follow up on time, and
-keep up with friends, family, and acquaintances without the awkward
-"sorry it's been so long" message.
+A friendship-first CRM — a CRM for the **people** in your life instead of
+companies. Perso helps you remember names and context, follow up on time,
+and keep up with friends, family, and acquaintances without the awkward
+"sorry it's been so long" message. **Ember**, Perso's built-in agent,
+surfaces who you should check in on, drafts messages for you, and answers
+questions across your circle.
 
 This repository is the Next.js app that will eventually be exported to
 [Eazo](https://eazo.ai) for deployment, so the project layout follows
@@ -94,7 +96,7 @@ fill in the values for local development.
 
 The `/map` page uses Apple's official [MapKit JS](https://developer.apple.com/maps/web/) SDK and needs three credentials from your Apple Developer account:
 
-1. Go to <https://developer.apple.com/account/resources/identifiers/list/maps> and create a **Maps ID** (any unique identifier, e.g. `maps.com.yourapp.personal-crm`).
+1. Go to <https://developer.apple.com/account/resources/identifiers/list/maps> and create a **Maps ID** (any unique identifier, e.g. `maps.com.yourapp.perso`).
 2. Go to <https://developer.apple.com/account/resources/authkeys/list>, create a new key, enable **MapKit JS**, associate the Maps ID, and download the resulting `.p8` file. **You can only download it once.**
 3. Copy the values into `.env.local`:
    - `MAPKIT_TEAM_ID` — your 10-character Team ID (top-right of the Developer portal).

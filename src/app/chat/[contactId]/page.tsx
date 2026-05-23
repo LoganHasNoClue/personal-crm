@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 
-import { NexusChat } from "@/components/chat/NexusChat";
+import { EmberChat } from "@/components/chat/EmberChat";
 import { Avatar, NavBar } from "@/components/ui";
 import { findSampleContact, SAMPLE_CONTACTS } from "@/lib/sample-contacts";
 
@@ -17,8 +17,8 @@ export async function generateMetadata({
   const contact = findSampleContact(contactId);
   return {
     title: contact
-      ? `Nexus · ${contact.nickname ?? contact.name}`
-      : "Nexus",
+      ? `Ember · ${contact.nickname ?? contact.name}`
+      : "Ember",
   };
 }
 
@@ -48,7 +48,7 @@ export default async function ChatAboutPersonPage({
           />
         }
       />
-      <NexusChat contact={contact} />
+      <EmberChat contact={contact} />
     </main>
   );
 }
