@@ -10,13 +10,18 @@ function photoFor(id: string): string {
 }
 
 /**
- * Local avatar URL. Points at `/public/avatars/<id>.jpg`. If the file
- * doesn't exist yet, the <img> 404s and Avatar.tsx's onError fallback
- * paints gradient initials — so it's safe to set even before the user
- * drops in a real photo. See public/avatars/README.md.
+ * Local avatar URL. Points at `/public/avatars/<id>.<ext>`. Defaults to
+ * `.jpg`; pass `"png"` for contacts whose real photo was dropped in as
+ * a PNG (the format LinkedIn typically serves). If the file doesn't
+ * exist yet, the <img> 404s and Avatar.tsx's onError fallback paints
+ * gradient initials — so it's safe to set even before a real photo is
+ * dropped in. See public/avatars/README.md.
  */
-function localPhoto(id: string): string {
-  return `/avatars/${id}.jpg`;
+function localPhoto(
+  id: string,
+  ext: "jpg" | "png" | "webp" = "jpg",
+): string {
+  return `/avatars/${id}.${ext}`;
 }
 
 /** Quick LinkedIn search URL — drop-in until you have the real profile slug. */
@@ -607,7 +612,7 @@ export const SAMPLE_CONTACTS: Contact[] = [
     nickname: "Waris",
     headline: "Founder, Dabloo Studios · filmmaker & visual artist",
     context: "Connected on LinkedIn",
-    photoUrl: localPhoto("c_waris"),
+    photoUrl: localPhoto("c_waris", "png"),
     source: "linkedin",
     tags: ["linkedin-met", "founder", "creative", "filmmaker"],
     profiles: { linkedin: linkedinSearch("Mohammad Waris Ansari") },
@@ -620,7 +625,7 @@ export const SAMPLE_CONTACTS: Contact[] = [
     name: "Prudhvi Gadiraju",
     headline: "Senior SWE / Tech Lead @ Thumbtack",
     context: "Connected on LinkedIn",
-    photoUrl: localPhoto("c_prudhvi"),
+    photoUrl: localPhoto("c_prudhvi", "png"),
     source: "linkedin",
     tags: ["linkedin-met", "engineer", "thumbtack"],
     profiles: { linkedin: linkedinSearch("Prudhvi Gadiraju") },
@@ -633,7 +638,7 @@ export const SAMPLE_CONTACTS: Contact[] = [
     name: "Yang Xie",
     headline: "Building artificial super intelligence",
     context: "Connected on LinkedIn",
-    photoUrl: localPhoto("c_yang"),
+    photoUrl: localPhoto("c_yang", "png"),
     source: "linkedin",
     tags: ["linkedin-met", "ai", "founder"],
     profiles: { linkedin: linkedinSearch("Yang Xie") },
@@ -647,7 +652,7 @@ export const SAMPLE_CONTACTS: Contact[] = [
     nickname: "Jaskaran",
     headline: "Senior Developer @ Connor Group · AI-driven digital transformation",
     context: "Connected on LinkedIn",
-    photoUrl: localPhoto("c_jaskaran"),
+    photoUrl: localPhoto("c_jaskaran", "png"),
     source: "linkedin",
     tags: ["linkedin-met", "engineer", "ai"],
     profiles: { linkedin: linkedinSearch("Jaskaran Singh Kohli") },
@@ -662,7 +667,7 @@ export const SAMPLE_CONTACTS: Contact[] = [
     context: "Connected on LinkedIn",
     notes: "Might be the same person as Marco (LA) building Dynamic Calendar — confirm?",
     meetingPlace: { label: "Milan, Italy", latitude: 45.4642, longitude: 9.19 },
-    photoUrl: localPhoto("c_marco_wielgus"),
+    photoUrl: localPhoto("c_marco_wielgus", "png"),
     source: "linkedin",
     tags: ["linkedin-met", "student", "italy"],
     profiles: { linkedin: linkedinSearch("Marco Wielgus") },
@@ -676,7 +681,7 @@ export const SAMPLE_CONTACTS: Contact[] = [
     headline: "Santa Clara University · open to work",
     context: "Connected on LinkedIn",
     meetingPlace: { label: "Santa Clara, CA", latitude: 37.3541, longitude: -121.9552 },
-    photoUrl: localPhoto("c_sharvari"),
+    photoUrl: localPhoto("c_sharvari", "png"),
     source: "linkedin",
     tags: ["linkedin-met", "scu", "student", "open-to-work"],
     profiles: { linkedin: linkedinSearch("Sharvari Gangamwar") },
@@ -691,7 +696,7 @@ export const SAMPLE_CONTACTS: Contact[] = [
     headline: "MS CS @ SCU · Python · Cloud · AI/ML · ex-Cognizant",
     context: "Connected on LinkedIn",
     meetingPlace: { label: "Santa Clara, CA", latitude: 37.3541, longitude: -121.9552 },
-    photoUrl: localPhoto("c_nirvisha"),
+    photoUrl: localPhoto("c_nirvisha", "png"),
     source: "linkedin",
     tags: ["linkedin-met", "scu", "ai", "engineer", "open-to-work"],
     profiles: { linkedin: linkedinSearch("Nirvisha Sriram") },
@@ -706,7 +711,7 @@ export const SAMPLE_CONTACTS: Contact[] = [
     headline: "Former SWE Intern @ EPAM · SCU student",
     context: "Connected on LinkedIn",
     meetingPlace: { label: "Santa Clara, CA", latitude: 37.3541, longitude: -121.9552 },
-    photoUrl: localPhoto("c_bhoomika"),
+    photoUrl: localPhoto("c_bhoomika", "png"),
     source: "linkedin",
     tags: ["linkedin-met", "scu", "engineer", "open-to-work"],
     profiles: { linkedin: linkedinSearch("Bhoomika Ganapuram") },
@@ -720,7 +725,7 @@ export const SAMPLE_CONTACTS: Contact[] = [
     name: "Sanjana Hiremath",
     headline: "AI Engineer · LLM fine-tuning & RAG · ex-SAP",
     context: "Connected on LinkedIn",
-    photoUrl: localPhoto("c_sanjana"),
+    photoUrl: localPhoto("c_sanjana", "png"),
     source: "linkedin",
     tags: ["linkedin-met", "ai", "engineer"],
     profiles: { linkedin: linkedinSearch("Sanjana Hiremath") },
@@ -733,7 +738,7 @@ export const SAMPLE_CONTACTS: Contact[] = [
     name: "Lyn Zhang",
     headline: "GTM @ Neo Browser · Umich · Chicago Booth",
     context: "Connected on LinkedIn",
-    photoUrl: localPhoto("c_lyn"),
+    photoUrl: localPhoto("c_lyn", "png"),
     source: "linkedin",
     tags: ["linkedin-met", "gtm", "founder-community"],
     profiles: { linkedin: linkedinSearch("Lyn Zhang") },
@@ -746,7 +751,7 @@ export const SAMPLE_CONTACTS: Contact[] = [
     name: "Steven Sung",
     headline: "Data Infra Engineer · ex-Meta",
     context: "Connected on LinkedIn",
-    photoUrl: localPhoto("c_steven"),
+    photoUrl: localPhoto("c_steven", "png"),
     source: "linkedin",
     tags: ["linkedin-met", "engineer", "data", "open-to-work"],
     profiles: { linkedin: linkedinSearch("Steven Sung") },
@@ -762,7 +767,7 @@ export const SAMPLE_CONTACTS: Contact[] = [
     notes:
       "Wore a Royal Oak — works at Jen as co-founder. Previously led AI work at Palantir (telecom side), and earlier was at Google, Blackstone, and Bain. Worth a real conversation — could open doors.",
     meetingPlace: { label: "San Francisco, CA", latitude: 37.7749, longitude: -122.4194 },
-    photoUrl: localPhoto("c_charlie_lin"),
+    photoUrl: localPhoto("c_charlie_lin", "png"),
     source: "linkedin",
     tags: ["linkedin-met", "founder", "ai", "easel-meetup", "investor-adjacent"],
     profiles: { linkedin: linkedinSearch("Charlie Lin") },
@@ -777,7 +782,7 @@ export const SAMPLE_CONTACTS: Contact[] = [
     name: "Yana Zhao",
     headline: "AI Product Lead · health tech · ex-TikTok, Abbott",
     context: "Connected on LinkedIn",
-    photoUrl: localPhoto("c_yana"),
+    photoUrl: localPhoto("c_yana", "png"),
     source: "linkedin",
     tags: ["linkedin-met", "pm", "ai", "health"],
     profiles: { linkedin: linkedinSearch("Yana Zhao") },
