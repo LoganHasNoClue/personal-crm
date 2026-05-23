@@ -88,6 +88,7 @@ fill in the values for local development.
 | `MAPKIT_TEAM_ID`      | For `/map`      | Server only   | 10-character Apple Developer Team ID. Used as the JWT `iss` claim.          |
 | `MAPKIT_KEY_ID`       | For `/map`      | Server only   | 10-character Key ID of the MapKit JS-enabled key you created in Apple's portal. |
 | `MAPKIT_PRIVATE_KEY`  | For `/map`      | Server only   | Contents of the `.p8` private key (PKCS8 PEM, single- or multi-line).        |
+| `OPENAI_API_KEY`      | For audio import | Server only  | OpenAI API key. Powers Whisper transcription + GPT-4o-mini contact extraction on the Add page. |
 
 ### Getting MapKit credentials
 

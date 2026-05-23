@@ -2,8 +2,11 @@
 
 import {
   ArrowRight,
+  AudioLines,
   MessageSquareText,
+  Mic,
   Smartphone,
+  Sparkles,
   UserPlus2,
   X,
   Check,
@@ -12,6 +15,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import * as React from "react";
 
+import { AudioImport } from "@/components/audio/AudioImport";
 import { GlassPill } from "@/components/glass";
 import {
   IconButton,
@@ -64,6 +68,38 @@ const SOURCES: ImportSource[] = [
     description: "Threads, group chats, and recent activity.",
     icon: MessageSquareText,
     estimated: 96,
+    status: "soon",
+  },
+];
+
+/**
+ * Audio capture platforms. These pretend to sync entire libraries — the
+ * "upload one recording" flow below them is the actually-working path
+ * via OpenAI Whisper + GPT-4o-mini.
+ */
+const AUDIO_SOURCES: ImportSource[] = [
+  {
+    id: "plaud",
+    label: "Plaud",
+    description: "Voice recordings from your Plaud Note device.",
+    icon: Mic,
+    estimated: 47,
+    status: "soon",
+  },
+  {
+    id: "granola",
+    label: "Granola",
+    description: "Meeting notes captured on your Mac.",
+    icon: AudioLines,
+    estimated: 19,
+    status: "soon",
+  },
+  {
+    id: "usemagic",
+    label: "Usemagic",
+    description: "AI-summarised voice notes from your library.",
+    icon: Sparkles,
+    estimated: 0,
     status: "soon",
   },
 ];
@@ -135,6 +171,41 @@ export function AddView() {
               Tapping a source will open the platform&apos;s native auth flow
               in a real build. None of these are wired up yet.
             </p>
+          </div>
+
+          {/* Import from audio: connectors + working upload flow */}
+          <div className="flex flex-col gap-3">
+            <h2 className="px-1 text-[12px] font-semibold uppercase tracking-[0.06em] text-zinc-500 dark:text-zinc-400">
+              Import from audio
+            </h2>
+            <Section>
+              {AUDIO_SOURCES.map((source) => (
+                <ListRow
+                  key={source.id}
+                  as="button"
+                  leading={<SourceIcon Icon={source.icon} />}
+                  title={source.label}
+                  subtitle={source.description}
+                  value={
+                    source.status === "available" ? (
+                      <span className="inline-flex items-center gap-1 text-zinc-500 dark:text-zinc-400">
+                        <span className="tabular-nums text-[15px]">
+                          {source.estimated}
+                        </span>
+                        <ArrowRight className="size-4" />
+                      </span>
+                    ) : (
+                      <GlassPill tone="info">Soon</GlassPill>
+                    )
+                  }
+                  onClick={() => {
+                    /* Mock connect flow placeholder. */
+                  }}
+                  disabled={source.status !== "available"}
+                />
+              ))}
+            </Section>
+            <AudioImport />
           </div>
 
           {/* Manual add */}

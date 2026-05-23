@@ -61,6 +61,11 @@ export const env = {
   mapkitKeyId: (): OptionalEnv => readEnv("MAPKIT_KEY_ID"),
   /** ES256 private key for the Maps Key (.p8 contents in PKCS8 PEM). */
   mapkitPrivateKey: (): OptionalEnv => readPemEnv("MAPKIT_PRIVATE_KEY"),
+  /**
+   * OpenAI API key. Server-only. Used for audio transcription (Whisper)
+   * and structured contact extraction (GPT-4o-mini).
+   */
+  openaiApiKey: (): OptionalEnv => readEnv("OPENAI_API_KEY"),
 } as const;
 
 /** True when all three MapKit credentials are present and look usable. */
@@ -68,4 +73,9 @@ export function hasMapKitCredentials(): boolean {
   return Boolean(
     env.mapkitTeamId() && env.mapkitKeyId() && env.mapkitPrivateKey(),
   );
+}
+
+/** True when OpenAI integrations (audio import, future chat) are usable. */
+export function hasOpenAiCredentials(): boolean {
+  return Boolean(env.openaiApiKey());
 }
