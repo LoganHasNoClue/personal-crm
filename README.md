@@ -38,6 +38,9 @@ src/
     env.ts              # Lazy, throw-free env var access
     mapkit-token.ts     # ES256 JWT signer for MapKit JS
     sample-contacts.ts  # In-memory placeholder data
+    audio-extract.ts    # OpenAI Whisper + GPT-4o-mini structured contact extraction
+    ember-agent.ts      # Live Ember agent (OpenAI Responses API, web_search + tools)
+    ember-mock.ts       # Offline fallback for the chat surface
   types/                # Shared TypeScript types and interfaces
 public/                 # Static assets served as-is
 ```
@@ -90,7 +93,7 @@ fill in the values for local development.
 | `MAPKIT_TEAM_ID`      | For `/map`      | Server only   | 10-character Apple Developer Team ID. Used as the JWT `iss` claim.          |
 | `MAPKIT_KEY_ID`       | For `/map`      | Server only   | 10-character Key ID of the MapKit JS-enabled key you created in Apple's portal. |
 | `MAPKIT_PRIVATE_KEY`  | For `/map`      | Server only   | Contents of the `.p8` private key (PKCS8 PEM, single- or multi-line).        |
-| `OPENAI_API_KEY`      | For audio import | Server only  | OpenAI API key. Powers Whisper transcription + GPT-4o-mini contact extraction on the Add page. |
+| `OPENAI_API_KEY`      | For Ember + audio import | Server only | OpenAI API key. Powers Ember's live chat agent (Responses API with web search), Whisper transcription, and structured contact extraction. |
 
 ### Getting MapKit credentials
 
@@ -104,6 +107,32 @@ The `/map` page uses Apple's official [MapKit JS](https://developer.apple.com/ma
    - `MAPKIT_PRIVATE_KEY` — paste the full contents of the `.p8` file (including the `-----BEGIN/END PRIVATE KEY-----` lines). For single-line envs, encode line breaks as `\n`.
 
 If any of the three are missing, `/api/mapkit/token` returns `503` and the `/map` page renders a friendly "configure credentials" empty state — the rest of the app keeps working.
+
+### Ember — the live AI agent
+
+`OPENAI_API_KEY` powers **Ember**, Perso's in-app agent. With a valid
+key, the `/chat` (and `/chat/[contactId]`) screens run a real,
+agentic, streaming model on the OpenAI Responses API. Ember has four
+tools available:
+
+- `web_search` — built-in OpenAI web search. Ember uses this for any
+  question about current events, public profiles, news, papers, or
+  anything outside your network.
+- `lookup_contact(id|name)` — pulls the full record (notes, current
+  project, aspirations, profiles, mutuals) for one contact.
+- `list_overdue_contacts(limit)` — surfaces who you're behind on
+  reaching out to, sorted by how overdue you are.
+- `find_mutual_connections(contact_id)` — builds warm intro paths.
+
+Tool calls stream live to the UI as small chips ("Searched the web",
+"Scanning who's overdue", "Looking up Alex") so you can see what
+Ember is doing. The response itself is streamed token-by-token as
+markdown. People Ember mentions show up as tappable cards underneath
+the reply.
+
+If `OPENAI_API_KEY` is missing, `/api/ember/chat` returns `503` and
+the chat surface silently falls back to the offline mock so the demo
+keeps working.
 
 ### Rules of thumb
 

@@ -21,7 +21,7 @@ export default async function ChatPage({
     <main className="app-shell mx-auto flex w-full max-w-md flex-1 flex-col gap-4 px-5 pt-10 sm:max-w-lg sm:pt-14">
       <NavBar
         title="Ember"
-        subtitle="Your friendship sidekick"
+        subtitle="Live agent · searches the web & your network"
         trailing={
           <IconButton variant="tinted" size="md" label="About Ember">
             <Sparkles />
