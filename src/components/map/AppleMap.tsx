@@ -98,7 +98,15 @@ export function AppleMap({
             const display = c.nickname ?? c.name;
             const annotation = new mapkit.Annotation(
               coordinate,
-              () => buildPhotoBubble(c),
+              () =>
+                buildPhotoBubble(c, (ev) => {
+                  // The DOM click is the source of truth on touch + desktop
+                  // (MapKit's own `select` event is unreliable for custom
+                  // factory annotations, so we wire our own handler here).
+                  ev.stopPropagation();
+                  ev.preventDefault();
+                  onSelectContact?.(c.id);
+                }),
               {
                 title: display,
                 subtitle: place.label,
@@ -126,14 +134,42 @@ export function AppleMap({
           const members = cluster.memberAnnotations
             .map((m) => contacts.find((c) => c.id === m.data?.contactId))
             .filter((c): c is Contact => Boolean(c));
-          return new mapkit.Annotation(
+          const clusterAnno = new mapkit.Annotation(
             cluster.coordinate as never,
-            () => buildClusterBubble(members),
+            () =>
+              buildClusterBubble(members, (ev) => {
+                ev.stopPropagation();
+                ev.preventDefault();
+                // Zoom in so the underlying photo bubbles separate into
+                // individually tappable contacts.
+                const targetMembers = cluster.memberAnnotations as unknown as
+                  | unknown[]
+                  | undefined;
+                if (targetMembers && targetMembers.length > 0) {
+                  (
+                    map as {
+                      showItems: (
+                        items: unknown[],
+                        opts: unknown,
+                      ) => void;
+                    }
+                  ).showItems(targetMembers, {
+                    animate: true,
+                    padding: new mapkit.Padding({
+                      top: 120,
+                      right: 48,
+                      bottom: 240,
+                      left: 48,
+                    }),
+                  });
+                }
+              }),
             {
               displayPriority: 1000,
               anchorOffset: new DOMPoint(0, -8),
             },
           );
+          return clusterAnno;
         };
 
         if (annotations.length > 0) {
@@ -191,20 +227,33 @@ export function AppleMap({
 
 const BUBBLE_SIZE = 48;
 
-function buildPhotoBubble(contact: Contact): HTMLElement {
-  const el = document.createElement("div");
+function buildPhotoBubble(
+  contact: Contact,
+  onClick: (event: MouseEvent) => void,
+): HTMLElement {
+  const el = document.createElement("button");
+  el.type = "button";
   el.className = "crm-photo-pin";
+  el.setAttribute(
+    "aria-label",
+    `Open ${contact.nickname ?? contact.name}'s profile`,
+  );
   el.style.cssText = bubbleBaseStyle();
 
   const inner = document.createElement("div");
-  inner.style.cssText = bubbleInnerStyle();
+  // Block the inner from swallowing pointer events — we want them to bubble
+  // up to the button so the click handler fires reliably on mobile and
+  // desktop.
+  inner.style.cssText = `${bubbleInnerStyle()};pointer-events:none;`;
 
   if (contact.photoUrl) {
     const img = document.createElement("img");
     img.src = contact.photoUrl;
     img.alt = "";
     img.loading = "lazy";
-    img.style.cssText = "width:100%;height:100%;object-fit:cover;display:block;";
+    img.draggable = false;
+    img.style.cssText =
+      "width:100%;height:100%;object-fit:cover;display:block;pointer-events:none;";
     img.onerror = () => {
       img.replaceWith(makeInitialsTile(contact));
     };
@@ -214,6 +263,7 @@ function buildPhotoBubble(contact: Contact): HTMLElement {
   }
 
   el.appendChild(inner);
+  el.addEventListener("click", onClick);
   return el;
 }
 
@@ -237,9 +287,18 @@ function makeInitialsTile(contact: Contact): HTMLElement {
   return tile;
 }
 
-function buildClusterBubble(members: Contact[]): HTMLElement {
-  const el = document.createElement("div");
+function buildClusterBubble(
+  members: Contact[],
+  onClick: (event: MouseEvent) => void,
+): HTMLElement {
+  const el = document.createElement("button");
+  el.type = "button";
+  el.setAttribute(
+    "aria-label",
+    `Expand ${members.length} contacts at this location`,
+  );
   el.style.cssText = clusterContainerStyle();
+  el.addEventListener("click", onClick);
 
   const stack = document.createElement("div");
   stack.style.cssText = clusterStackStyle();
@@ -317,6 +376,13 @@ function bubbleBaseStyle(): string {
     "transform:translate(-50%,-100%)",
     "cursor:pointer",
     "transition:transform 0.15s ease-out",
+    "padding:0",
+    "border:0",
+    "background:transparent",
+    "outline:none",
+    "-webkit-tap-highlight-color:transparent",
+    "appearance:none",
+    "-webkit-appearance:none",
   ].join(";");
 }
 
@@ -338,6 +404,13 @@ function clusterContainerStyle(): string {
     "transform:translate(-50%,-100%)",
     "cursor:pointer",
     "filter:drop-shadow(0 6px 18px rgba(15,23,42,0.3))",
+    "padding:0",
+    "border:0",
+    "background:transparent",
+    "outline:none",
+    "-webkit-tap-highlight-color:transparent",
+    "appearance:none",
+    "-webkit-appearance:none",
   ].join(";");
 }
 
