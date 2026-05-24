@@ -2,6 +2,7 @@ import { ArrowDownAZ, Map as MapIcon } from "lucide-react";
 import Link from "next/link";
 
 import { Avatar, IconButton, ListRow, NavBar, Section } from "@/components/ui";
+import { getT } from "@/lib/i18n/server";
 import {
   SAMPLE_CONTACTS,
   daysSinceLastContact,
@@ -12,7 +13,8 @@ export const metadata = {
   title: "People",
 };
 
-export default function PeoplePage() {
+export default async function PeoplePage() {
+  const { t } = await getT();
   // Group by the first letter of the display name — iOS Contacts style.
   const grouped = groupByLetter(
     [...SAMPLE_CONTACTS].sort((a, b) =>
@@ -23,16 +25,16 @@ export default function PeoplePage() {
   return (
     <main className="app-shell mx-auto flex w-full max-w-md flex-col gap-6 px-5 pt-10 sm:max-w-lg sm:pt-14">
       <NavBar
-        title="People"
-        subtitle={`${SAMPLE_CONTACTS.length} people · all sources`}
+        title={t("people.title")}
+        subtitle={t("people.subtitle", { count: SAMPLE_CONTACTS.length })}
         trailing={
           <>
-            <Link href="/map" aria-label="Open map" className="contents">
-              <IconButton variant="tinted" size="md" label="Map view">
+            <Link href="/map" aria-label={t("people.action.map")} className="contents">
+              <IconButton variant="tinted" size="md" label={t("people.action.map")}>
                 <MapIcon />
               </IconButton>
             </Link>
-            <IconButton variant="tinted" size="md" label="Sort">
+            <IconButton variant="tinted" size="md" label={t("people.action.sort")}>
               <ArrowDownAZ />
             </IconButton>
           </>

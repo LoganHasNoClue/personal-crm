@@ -3,6 +3,7 @@
 import { load } from "@apple/mapkit-loader";
 import * as React from "react";
 
+import { useT } from "@/lib/i18n/client";
 import type { Contact } from "@/types/contact";
 
 interface AppleMapProps {
@@ -220,6 +221,8 @@ export function AppleMap({
     </div>
   );
 }
+
+
 
 /* -------------------------------------------------------------------------- */
 /* DOM annotation builders                                                    */
@@ -450,18 +453,19 @@ function initialsFor(name: string): string {
 }
 
 function MapOverlay({ status }: { status: Status }) {
+  const t = useT();
   const title =
     status.kind === "loading"
-      ? "Loading map…"
+      ? t("map.loading")
       : status.kind === "not-configured"
-        ? "Map not configured yet"
-        : "Couldn’t load the map";
+        ? t("map.notConfigured")
+        : t("map.error");
   const body =
     status.kind === "loading"
-      ? "Asking Apple for a fresh authorization token."
+      ? t("common.loading")
       : "message" in status
         ? status.message
-        : "Please try again in a moment.";
+        : t("common.retry");
   return (
     <div className="absolute inset-0 flex items-center justify-center p-6">
       <div className="max-w-sm rounded-3xl border border-white/40 bg-white/70 p-5 text-center backdrop-blur-2xl backdrop-saturate-150 dark:border-white/10 dark:bg-zinc-900/70">

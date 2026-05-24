@@ -11,26 +11,29 @@ import {
   SearchField,
   Section,
 } from "@/components/ui";
+import { useT } from "@/lib/i18n/client";
 import { SAMPLE_CONTACTS } from "@/lib/sample-contacts";
 import { formatRelative } from "@/lib/time";
 import type { Contact } from "@/types/contact";
 
 interface CannedQuery {
   id: string;
-  label: string;
-  description: string;
+  labelKey: string;
+  descriptionKey: string;
   predicate: (c: Contact) => boolean;
 }
 
 /**
  * Suggested searches modeled on the inspiration screenshots — small
- * "structured queries" the agent could answer over your network.
+ * "structured queries" the agent could answer over your network. The
+ * `label`/`description` strings come from the i18n dictionary so they
+ * respect the active locale.
  */
 const CANNED: CannedQuery[] = [
   {
     id: "overdue",
-    label: "Who should I check in on?",
-    description: "Past their check-in cadence",
+    labelKey: "search.q.overdue.label",
+    descriptionKey: "search.q.overdue.desc",
     predicate: (c) => {
       if (!c.checkInCadenceDays || !c.lastContactedAt) return false;
       const since = (Date.now() - new Date(c.lastContactedAt).getTime()) /
@@ -40,8 +43,8 @@ const CANNED: CannedQuery[] = [
   },
   {
     id: "closest",
-    label: "My closest friends",
-    description: "Best friends & partner",
+    labelKey: "search.q.closest.label",
+    descriptionKey: "search.q.closest.desc",
     predicate: (c) =>
       (c.tags ?? []).some((t) =>
         ["best-friend", "partner"].includes(t),
@@ -49,14 +52,14 @@ const CANNED: CannedQuery[] = [
   },
   {
     id: "family",
-    label: "Family",
-    description: "People I never want to neglect",
+    labelKey: "search.q.family.label",
+    descriptionKey: "search.q.family.desc",
     predicate: (c) => (c.tags ?? []).includes("family"),
   },
   {
     id: "recent",
-    label: "I met last quarter",
-    description: "Added in the past 90 days",
+    labelKey: "search.q.recent.label",
+    descriptionKey: "search.q.recent.desc",
     predicate: (c) => {
       const created = new Date(c.createdAt).getTime();
       return Date.now() - created < 90 * 86_400_000;
@@ -64,20 +67,21 @@ const CANNED: CannedQuery[] = [
   },
   {
     id: "founders",
-    label: "Founders in my network",
-    description: "Tagged founder · early-stage builders",
+    labelKey: "search.q.founders.label",
+    descriptionKey: "search.q.founders.desc",
     predicate: (c) => (c.tags ?? []).includes("founder"),
   },
   {
     id: "vcs",
-    label: "Who do I know who knows VCs?",
-    description: "Investors + warm-intro paths",
+    labelKey: "search.q.vcs.label",
+    descriptionKey: "search.q.vcs.desc",
     predicate: (c) =>
       (c.tags ?? []).some((t) => ["investor", "vc", "solo-gp"].includes(t)),
   },
 ];
 
 export function SearchView() {
+  const t = useT();
   const [query, setQuery] = React.useState("");
   const [activeCanned, setActiveCanned] = React.useState<string | null>(null);
 
@@ -107,8 +111,8 @@ export function SearchView() {
   return (
     <main className="app-shell mx-auto flex w-full max-w-md flex-col gap-6 px-5 pt-10 sm:max-w-lg sm:pt-14">
       <NavBar
-        title="Search"
-        subtitle="Find anyone, or ask Ember a question"
+        title={t("search.title")}
+        subtitle={t("chat.subtitle")}
       />
 
       <SearchField
@@ -117,14 +121,14 @@ export function SearchView() {
           setQuery(v);
           if (activeCanned) setActiveCanned(null);
         }}
-        placeholder="Name, place, tag, notes…"
+        placeholder={t("search.placeholder")}
         autoFocus
       />
 
       {/* Canned queries — horizontally scrollable chips. */}
       <section className="flex flex-col gap-3">
         <h2 className="text-[12px] font-semibold uppercase tracking-[0.06em] text-zinc-500 dark:text-zinc-400">
-          Try a question
+          {t("search.canned.title")}
         </h2>
         <div className="-mx-5 flex gap-2 overflow-x-auto px-5 pb-1">
           {CANNED.map((c) => {
@@ -144,7 +148,7 @@ export function SearchView() {
                 }`}
               >
                 <span className="block text-[14px] font-semibold leading-tight">
-                  {c.label}
+                  {t(c.labelKey)}
                 </span>
                 <span
                   className={`mt-0.5 block text-[12px] leading-tight ${
@@ -153,7 +157,7 @@ export function SearchView() {
                       : "text-zinc-500 dark:text-zinc-400"
                   }`}
                 >
-                  {c.description}
+                  {t(c.descriptionKey)}
                 </span>
               </button>
             );
@@ -166,7 +170,7 @@ export function SearchView() {
         <Link
           href={{
             pathname: "/chat",
-            query: { q: canned ? canned.label : query },
+            query: { q: canned ? t(canned.labelKey) : query },
           }}
           className="inline-flex items-center gap-3 rounded-2xl border border-violet-300/40 bg-gradient-to-br from-violet-500/15 to-indigo-500/15 px-4 py-3 text-left text-[15px] backdrop-blur-2xl backdrop-saturate-150 hover:from-violet-500/20 hover:to-indigo-500/20 dark:border-violet-400/20"
         >
@@ -175,17 +179,16 @@ export function SearchView() {
           </span>
           <span className="min-w-0 flex-1">
             <span className="block truncate font-semibold text-zinc-900 dark:text-zinc-50">
-              Ask Ember: &ldquo;{canned ? canned.label : query}&rdquo;
-            </span>
-            <span className="block text-[12px] text-zinc-500 dark:text-zinc-400">
-              I&apos;ll dig through your circle and bring back an answer.
+              {t("search.askEmber", {
+                query: canned ? t(canned.labelKey) : query,
+              })}
             </span>
           </span>
         </Link>
       )}
 
       {results.length > 0 && (
-        <Section header={canned ? canned.label : "Matches"}>
+        <Section header={canned ? t(canned.labelKey) : t("search.matches")}>
           {results.map((c) => (
             <ListRow
               key={c.id}
@@ -212,8 +215,7 @@ export function SearchView() {
 
       {trimmed.length > 0 && results.length === 0 && !canned && (
         <p className="px-1 text-[14px] text-zinc-500 dark:text-zinc-400">
-          No matches in your network. Try asking Ember instead — I can pull
-          in people you haven&apos;t added yet.
+          {t("people.empty")}
         </p>
       )}
     </main>

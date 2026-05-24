@@ -36,6 +36,7 @@ src/
   lib/                  # Utilities and helpers
     cn.ts               # Tiny class-name combiner
     env.ts              # Lazy, throw-free env var access
+    i18n/               # Cookie-based locale dictionary + server/client translators
     mapkit-token.ts     # ES256 JWT signer for MapKit JS
     sample-contacts.ts  # In-memory placeholder data
     audio-extract.ts    # OpenAI Whisper + GPT-4o-mini structured contact extraction
@@ -133,6 +134,18 @@ the reply.
 If `OPENAI_API_KEY` is missing, `/api/ember/chat` returns `503` and
 the chat surface silently falls back to the offline mock so the demo
 keeps working.
+
+### Languages
+
+Perso ships in **English** and **Simplified Chinese** (`简体中文`).
+Translations live in [`src/lib/i18n/dictionary.ts`](./src/lib/i18n/dictionary.ts);
+the active locale is stored in the `perso-lang` cookie. Server
+components read it via `getT()`/`getLocale()`, client components via
+the `useT()`/`useLocale()` hooks, and a single
+[`<LanguageToggle />`](./src/components/LanguageToggle.tsx) button on
+the home page (and on `/more`) flips the entire app between the two
+locales — including the Ember agent, which picks up the locale and
+replies in the active language even when the user types in the other.
 
 ### Rules of thumb
 

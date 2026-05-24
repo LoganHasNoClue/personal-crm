@@ -25,6 +25,7 @@ import {
   Section,
   Sheet,
 } from "@/components/ui";
+import { useT } from "@/lib/i18n/client";
 
 interface ImportSource {
   id: string;
@@ -106,6 +107,7 @@ const AUDIO_SOURCES: ImportSource[] = [
 
 /** Sheet-style add screen. The whole screen is the sheet — no overlay. */
 export function AddView() {
+  const t = useT();
   const router = useRouter();
   const [name, setName] = React.useState("");
   const [headline, setHeadline] = React.useState("");
@@ -124,10 +126,10 @@ export function AddView() {
   return (
     <main className="app-shell app-shell--full relative flex min-h-dvh w-full flex-col px-3 pt-2 sm:px-6 sm:pt-6">
       <Sheet
-        title="Add a person"
+        title={t("add.title")}
         trailing={
-          <Link href="/people" aria-label="Close" className="contents">
-            <IconButton variant="ghost" size="sm" label="Close">
+          <Link href="/people" aria-label={t("add.closeAria")} className="contents">
+            <IconButton variant="ghost" size="sm" label={t("add.closeAria")}>
               <X />
             </IconButton>
           </Link>
@@ -138,7 +140,7 @@ export function AddView() {
           {/* Import sources */}
           <div className="flex flex-col gap-3">
             <h2 className="px-1 text-[12px] font-semibold uppercase tracking-[0.06em] text-zinc-500 dark:text-zinc-400">
-              Import in bulk
+              {t("add.import.title")}
             </h2>
             <Section>
               {SOURCES.map((source) => (
@@ -157,7 +159,7 @@ export function AddView() {
                         <ArrowRight className="size-4" />
                       </span>
                     ) : (
-                      <GlassPill tone="info">Soon</GlassPill>
+                      <GlassPill tone="info">{t("source.soon")}</GlassPill>
                     )
                   }
                   onClick={() => {
@@ -168,15 +170,14 @@ export function AddView() {
               ))}
             </Section>
             <p className="px-4 text-[12px] leading-snug text-zinc-500 dark:text-zinc-400">
-              Tapping a source will open the platform&apos;s native auth flow
-              in a real build. None of these are wired up yet.
+              {t("add.import.subtitle")}
             </p>
           </div>
 
           {/* Import from audio: connectors + working upload flow */}
           <div className="flex flex-col gap-3">
             <h2 className="px-1 text-[12px] font-semibold uppercase tracking-[0.06em] text-zinc-500 dark:text-zinc-400">
-              Import from audio
+              {t("add.audio.title")}
             </h2>
             <Section>
               {AUDIO_SOURCES.map((source) => (
@@ -195,7 +196,7 @@ export function AddView() {
                         <ArrowRight className="size-4" />
                       </span>
                     ) : (
-                      <GlassPill tone="info">Soon</GlassPill>
+                      <GlassPill tone="info">{t("source.soon")}</GlassPill>
                     )
                   }
                   onClick={() => {
@@ -211,27 +212,27 @@ export function AddView() {
           {/* Manual add */}
           <form onSubmit={handleSubmit} className="flex flex-col gap-3">
             <h2 className="px-1 text-[12px] font-semibold uppercase tracking-[0.06em] text-zinc-500 dark:text-zinc-400">
-              Or add one manually
+              {t("add.manual.title")}
             </h2>
             <Section>
               <Field
-                label="Name"
+                label={t("add.manual.nameLabel")}
                 value={name}
                 onChange={setName}
-                placeholder="Joshua Browder"
+                placeholder={t("add.manual.namePlaceholder")}
                 autoFocus
               />
               <Field
-                label="Headline"
+                label={t("add.manual.headlineLabel")}
                 value={headline}
                 onChange={setHeadline}
-                placeholder="What they do, or how you'd describe them"
+                placeholder={t("add.manual.headlinePlaceholder")}
               />
               <Field
-                label="Where you met"
+                label={t("add.manual.placeLabel")}
                 value={where}
                 onChange={setWhere}
-                placeholder="Coffee shop in SoMa"
+                placeholder={t("add.manual.placePlaceholder")}
               />
             </Section>
 
@@ -243,12 +244,12 @@ export function AddView() {
               {submitted ? (
                 <>
                   <Check className="size-4" />
-                  Saved
+                  {t("common.save")}
                 </>
               ) : (
                 <>
                   <UserPlus2 className="size-4" />
-                  Save person
+                  {t("add.manual.save")}
                 </>
               )}
             </button>

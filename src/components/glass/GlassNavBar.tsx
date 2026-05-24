@@ -6,10 +6,12 @@ import { usePathname } from "next/navigation";
 import * as React from "react";
 
 import { cn } from "@/lib/cn";
+import { useT } from "@/lib/i18n/client";
 
 interface NavItem {
   href: string;
-  label: string;
+  /** Translation key resolved at render time so language switches re-paint. */
+  labelKey: string;
   icon: React.ComponentType<{ className?: string }>;
   /**
    * When the current path matches this prefix, the item is treated as
@@ -21,11 +23,32 @@ interface NavItem {
 }
 
 const items: NavItem[] = [
-  { href: "/", label: "Home", icon: House, matchPrefix: "/$" },
-  { href: "/people", label: "People", icon: SquareUserRound, matchPrefix: "/people" },
-  { href: "/add", label: "Add", icon: Plus, matchPrefix: "/add", primary: true },
-  { href: "/search", label: "Search", icon: Search, matchPrefix: "/search" },
-  { href: "/chat", label: "Ember", icon: Sparkles, matchPrefix: "/chat" },
+  { href: "/", labelKey: "nav.home", icon: House, matchPrefix: "/$" },
+  {
+    href: "/people",
+    labelKey: "nav.people",
+    icon: SquareUserRound,
+    matchPrefix: "/people",
+  },
+  {
+    href: "/add",
+    labelKey: "nav.add",
+    icon: Plus,
+    matchPrefix: "/add",
+    primary: true,
+  },
+  {
+    href: "/search",
+    labelKey: "nav.search",
+    icon: Search,
+    matchPrefix: "/search",
+  },
+  {
+    href: "/chat",
+    labelKey: "nav.ember",
+    icon: Sparkles,
+    matchPrefix: "/chat",
+  },
 ];
 
 /**
@@ -36,6 +59,7 @@ const items: NavItem[] = [
  */
 export function GlassNavBar() {
   const pathname = usePathname();
+  const t = useT();
 
   return (
     <nav
@@ -60,12 +84,13 @@ export function GlassNavBar() {
         <ul className="relative flex items-stretch justify-around">
           {items.map((item) => {
             const isActive = isItemActive(pathname, item);
+            const label = t(item.labelKey);
             return (
               <li key={item.href} className="flex-1">
                 <Link
                   href={item.href}
                   aria-current={isActive ? "page" : undefined}
-                  aria-label={item.label}
+                  aria-label={label}
                   className={cn(
                     "group flex h-16 min-h-16 min-w-12 flex-col items-center justify-center gap-0.5 px-1",
                     item.primary ? "-mt-3" : "",
@@ -85,7 +110,7 @@ export function GlassNavBar() {
                         : "text-zinc-500 dark:text-zinc-400",
                     )}
                   >
-                    {item.label}
+                    {label}
                   </span>
                 </Link>
               </li>

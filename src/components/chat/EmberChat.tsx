@@ -1,6 +1,18 @@
 "use client";
 
-import { ArrowUp, Globe, Search, Sparkles, Users } from "lucide-react";
+import {
+  ArrowUp,
+  Globe,
+  Handshake,
+  History,
+  Mail,
+  MessageCircleHeart,
+  PenLine,
+  Search,
+  Sparkles,
+  Telescope,
+  Users,
+} from "lucide-react";
 import Link from "next/link";
 import * as React from "react";
 import ReactMarkdown from "react-markdown";
@@ -8,6 +20,7 @@ import remarkGfm from "remark-gfm";
 
 import { Avatar, ChatBubble, ThinkingDots } from "@/components/ui";
 import { generateMockResponse, emberOpener } from "@/lib/ember-mock";
+import { useLocale, useT } from "@/lib/i18n/client";
 import { findSampleContact } from "@/lib/sample-contacts";
 import type { Contact } from "@/types/contact";
 
@@ -64,13 +77,21 @@ const makeId = (prefix: string) => {
 /* -------------------------------------------------------------------------- */
 
 export function EmberChat({ contact = null, initialQuery }: EmberChatProps) {
+  const t = useT();
+  const { locale } = useLocale();
   const [messages, setMessages] = React.useState<ChatMessage[]>(() => {
     const opener = emberOpener(contact ?? null);
+    const localized = contact
+      ? t("chat.openerContact", { name: contact.nickname ?? contact.name })
+      : t("chat.opener");
     return [
       {
-        id: opener.id,
+        // Use a deterministic id for the opener so SSR and client agree;
+        // `emberOpener` would otherwise mint a fresh Math.random() id
+        // per render and trigger a hydration mismatch warning.
+        id: contact ? `opener_${contact.id}` : "opener_root",
         role: "assistant",
-        text: opener.text ?? "",
+        text: localized || opener.text || "",
         toolEvents: [],
         references: [],
         streaming: false,
@@ -272,6 +293,7 @@ export function EmberChat({ contact = null, initialQuery }: EmberChatProps) {
           body: JSON.stringify({
             messages: history,
             contactId: contact?.id ?? null,
+            locale,
           }),
           signal: controller.signal,
         });
@@ -304,7 +326,7 @@ export function EmberChat({ contact = null, initialQuery }: EmberChatProps) {
         setSending(false);
       }
     },
-    [contact, sending, consumeStream, runMockFallback, updateAssistant],
+    [contact, sending, locale, consumeStream, runMockFallback, updateAssistant],
   );
 
   React.useEffect(() => {
@@ -345,12 +367,21 @@ export function EmberChat({ contact = null, initialQuery }: EmberChatProps) {
     lastAssistant.text.length === 0 &&
     lastAssistant.toolEvents.length === 0;
 
+  const hasUserMessage = messages.some((m) => m.role === "user");
+  const showSuggestions = !hasUserMessage && !sending;
+
   return (
     <div className="flex flex-1 flex-col">
       <div className="flex flex-1 flex-col gap-3 pb-40">
         {messages.map((msg) => (
           <MessageView key={msg.id} message={msg} contact={contact} />
         ))}
+        {showSuggestions && (
+          <SuggestionGrid
+            contact={contact}
+            onPick={(query) => void sendMessage(query)}
+          />
+        )}
         {lastIsStreamingEmpty && (
           <ThinkingPill contact={contact} />
         )}
@@ -364,8 +395,10 @@ export function EmberChat({ contact = null, initialQuery }: EmberChatProps) {
         disabled={sending}
         placeholder={
           contact
-            ? `Ask about ${contact.nickname ?? contact.name}…`
-            : "Ask Ember anything…"
+            ? t("chat.placeholderContact", {
+                name: contact.nickname ?? contact.name,
+              })
+            : t("chat.placeholder")
         }
       />
     </div>
@@ -395,12 +428,11 @@ function MessageView({
   message: ChatMessage;
   contact: Contact | null;
 }) {
+  const t = useT();
   if (message.role === "user") {
     return <ChatBubble role="user">{message.text}</ChatBubble>;
   }
 
-  // Assistant message — render tool chips above the bubble, then the
-  // markdown body, then any referenced contact cards.
   const visibleText = message.text.replace(/\[ref:c_[a-z0-9_]+\]/gi, "").trim();
   const showBubble =
     visibleText.length > 0 || (message.streaming && message.toolEvents.length > 0);
@@ -409,8 +441,8 @@ function MessageView({
     <div className="flex w-full flex-col gap-2">
       {message.toolEvents.length > 0 && (
         <div className="-mx-1 flex flex-wrap gap-1.5 self-start pl-1">
-          {message.toolEvents.map((t) => (
-            <ToolChip key={t.id} event={t} />
+          {message.toolEvents.map((evt) => (
+            <ToolChip key={evt.id} event={evt} />
           ))}
         </div>
       )}
@@ -428,7 +460,7 @@ function MessageView({
         <ChatBubble role="assistant" className="!justify-start">
           <p className="text-zinc-700 dark:text-zinc-300">
             <span className="font-medium text-rose-600 dark:text-rose-400">
-              Couldn&apos;t reach Ember.
+              {t("chat.errorPrefix")}
             </span>{" "}
             {message.error}
           </p>
@@ -436,14 +468,14 @@ function MessageView({
       )}
 
       {message.references.length > 0 && (
-        <ReferenceList contactIds={message.references} />
+        <ReferenceList contactIds={message.references} label={t("chat.peopleReferenced")} />
       )}
 
       {!message.streaming &&
         message.source !== "opener" &&
         message.source === "mock" && (
           <p className="pl-2 text-[11px] uppercase tracking-wide text-zinc-400 dark:text-zinc-500">
-            Showing offline reply · set OPENAI_API_KEY for the live agent
+            {t("chat.mockNotice")}
           </p>
         )}
 
@@ -453,13 +485,14 @@ function MessageView({
 }
 
 function ThinkingPill({ contact }: { contact: Contact | null }) {
+  const t = useT();
   return (
     <div className="flex items-center gap-2 self-start rounded-3xl border border-white/40 bg-white/55 px-3.5 py-2.5 text-[14px] text-zinc-600 backdrop-blur-xl backdrop-saturate-150 dark:border-white/10 dark:bg-white/[0.06] dark:text-zinc-300">
       <ThinkingDots />
       <span>
         {contact
-          ? `Asking Ember about ${contact.nickname ?? contact.name}`
-          : "Ember is thinking"}
+          ? t("chat.thinkingContact", { name: contact.nickname ?? contact.name })
+          : t("chat.thinking")}
       </span>
     </div>
   );
@@ -489,7 +522,13 @@ const ICON_FOR_TOOL: Record<
   find_mutual_connections: Users,
 };
 
-function ReferenceList({ contactIds }: { contactIds: string[] }) {
+function ReferenceList({
+  contactIds,
+  label,
+}: {
+  contactIds: string[];
+  label: string;
+}) {
   const contacts = contactIds
     .map((id) => findSampleContact(id))
     .filter((c): c is Contact => Boolean(c));
@@ -497,7 +536,7 @@ function ReferenceList({ contactIds }: { contactIds: string[] }) {
   return (
     <div className="flex flex-col gap-2 pl-1 pt-1">
       <span className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-        People referenced
+        {label}
       </span>
       <div className="flex flex-col gap-1.5">
         {contacts.map((c) => (
@@ -636,6 +675,116 @@ function renderMockAsMarkdown(payload: {
 /* -------------------------------------------------------------------------- */
 /* Composer                                                                   */
 /* -------------------------------------------------------------------------- */
+
+/**
+ * Tappable suggestion cards shown only when the chat is fresh (just
+ * the opener, no user messages yet). Picks contact-aware prompts when
+ * we're on a `/chat/[contactId]` page so the user can dive in with
+ * one tap.
+ */
+function SuggestionGrid({
+  contact,
+  onPick,
+}: {
+  contact: Contact | null;
+  onPick: (query: string) => void;
+}) {
+  const t = useT();
+  const suggestions: Suggestion[] = contact
+    ? [
+        {
+          id: "summary",
+          icon: History,
+          titleKey: "chat.suggestContact.summary.title",
+          hintKey: "chat.suggestContact.summary.hint",
+        },
+        {
+          id: "message",
+          icon: Mail,
+          titleKey: "chat.suggestContact.message.title",
+          hintKey: "chat.suggestContact.message.hint",
+        },
+        {
+          id: "mutuals",
+          icon: Users,
+          titleKey: "chat.suggestContact.mutuals.title",
+          hintKey: "chat.suggestContact.mutuals.hint",
+        },
+        {
+          id: "update",
+          icon: Globe,
+          titleKey: "chat.suggestContact.update.title",
+          hintKey: "chat.suggestContact.update.hint",
+        },
+      ]
+    : [
+        {
+          id: "checkin",
+          icon: MessageCircleHeart,
+          titleKey: "chat.suggest.checkIn.title",
+          hintKey: "chat.suggest.checkIn.hint",
+        },
+        {
+          id: "warm",
+          icon: Handshake,
+          titleKey: "chat.suggest.warmIntro.title",
+          hintKey: "chat.suggest.warmIntro.hint",
+        },
+        {
+          id: "draft",
+          icon: PenLine,
+          titleKey: "chat.suggest.draftMessage.title",
+          hintKey: "chat.suggest.draftMessage.hint",
+        },
+        {
+          id: "research",
+          icon: Telescope,
+          titleKey: "chat.suggest.research.title",
+          hintKey: "chat.suggest.research.hint",
+        },
+      ];
+
+  return (
+    <div className="-mx-1 mt-1 flex flex-col gap-2">
+      <p className="px-2 text-[12px] font-semibold uppercase tracking-[0.06em] text-zinc-500 dark:text-zinc-400">
+        {t("chat.suggestions.title")}
+      </p>
+      <div className="grid grid-cols-2 gap-2">
+        {suggestions.map((s) => {
+          const title = t(s.titleKey);
+          const Icon = s.icon;
+          return (
+            <button
+              key={s.id}
+              type="button"
+              onClick={() => onPick(title)}
+              className="group flex h-full min-h-[78px] flex-col items-start justify-between gap-2 rounded-2xl border border-white/40 bg-white/55 p-3 text-left backdrop-blur-2xl backdrop-saturate-150 transition active:scale-[0.97] hover:bg-white/70 dark:border-white/10 dark:bg-white/[0.05] dark:hover:bg-white/[0.08]"
+            >
+              <span className="flex size-8 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500/15 to-indigo-500/15 text-violet-700 dark:text-violet-300">
+                <Icon className="size-[16px]" />
+              </span>
+              <span className="flex flex-col">
+                <span className="text-[13px] font-semibold leading-tight text-zinc-900 dark:text-zinc-50">
+                  {title}
+                </span>
+                <span className="mt-0.5 text-[11px] leading-snug text-zinc-500 dark:text-zinc-400">
+                  {t(s.hintKey)}
+                </span>
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+interface Suggestion {
+  id: string;
+  icon: React.ComponentType<{ className?: string }>;
+  titleKey: string;
+  hintKey: string;
+}
 
 function Composer({
   value,

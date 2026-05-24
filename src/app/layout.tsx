@@ -2,6 +2,9 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 
 import { GlassNavBar } from "@/components/glass";
+import { HTML_LANG } from "@/lib/i18n";
+import { LocaleProvider } from "@/lib/i18n/client";
+import { getLocale } from "@/lib/i18n/server";
 
 import "./globals.css";
 
@@ -43,22 +46,25 @@ export const viewport: Viewport = {
   ],
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const locale = await getLocale();
   return (
     <html
-      lang="en"
+      lang={HTML_LANG[locale]}
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-dvh font-sans text-foreground">
         {/* Decorative mesh-gradient background. Lives behind everything so
             our glass surfaces have rich content to refract. */}
         <div aria-hidden className="app-bg" />
-        {children}
-        <GlassNavBar />
+        <LocaleProvider initialLocale={locale}>
+          {children}
+          <GlassNavBar />
+        </LocaleProvider>
       </body>
     </html>
   );

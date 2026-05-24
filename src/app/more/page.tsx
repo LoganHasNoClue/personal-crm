@@ -10,15 +10,22 @@ import {
 
 import { ListRow, NavBar, Section } from "@/components/ui";
 import { GlassCard } from "@/components/glass";
+import { LanguageToggle } from "@/components/LanguageToggle";
+import { getT } from "@/lib/i18n/server";
 
 export const metadata = {
   title: "More",
 };
 
-export default function MorePage() {
+export default async function MorePage() {
+  const { t } = await getT();
   return (
     <main className="app-shell mx-auto flex w-full max-w-md flex-col gap-6 px-5 pt-10 sm:max-w-lg sm:pt-14">
-      <NavBar title="More" subtitle="Connections, settings, and the long tail" />
+      <NavBar
+        title={t("more.title")}
+        subtitle={t("chat.subtitle")}
+        trailing={<LanguageToggle />}
+      />
 
       <GlassCard padding="lg" className="bg-gradient-to-br from-violet-500/10 to-indigo-500/10">
         <div className="flex items-center gap-3">
@@ -27,16 +34,16 @@ export default function MorePage() {
           </span>
           <div className="flex flex-col">
             <p className="text-[15px] font-semibold text-zinc-900 dark:text-zinc-50">
-              Perso Pro
+              {t("more.pro.title")}
             </p>
             <p className="text-[13px] text-zinc-600 dark:text-zinc-300">
-              Unlimited Ember prompts &amp; advanced agents.
+              {t("more.pro.subtitle")}
             </p>
           </div>
         </div>
       </GlassCard>
 
-      <Section header="Network">
+      <Section header={t("more.section.network")}>
         <ListRow
           as="link"
           href="/more/integrations"
@@ -45,8 +52,8 @@ export default function MorePage() {
               <LinkIcon className="size-4" />
             </Tile>
           }
-          title="Integrations"
-          subtitle="Apple Contacts, LinkedIn, Instagram, iMessage"
+          title={t("more.integrations")}
+          subtitle="Apple, LinkedIn, Instagram, iMessage"
           chevron
         />
         <ListRow
@@ -57,13 +64,13 @@ export default function MorePage() {
               <MapIcon className="size-4" />
             </Tile>
           }
-          title="Map view"
-          subtitle="Where you've met everyone"
+          title={t("more.mapItem")}
+          subtitle={t("map.subtitle")}
           chevron
         />
       </Section>
 
-      <Section header="Account">
+      <Section header={t("more.section.account")}>
         <ListRow
           as="link"
           href="/more/settings"
@@ -72,7 +79,7 @@ export default function MorePage() {
               <Settings className="size-4" />
             </Tile>
           }
-          title="Settings"
+          title={t("more.settings")}
           chevron
         />
         <ListRow
@@ -82,8 +89,7 @@ export default function MorePage() {
               <BookOpen className="size-4" />
             </Tile>
           }
-          title="Library"
-          subtitle="Saved drafts, threads, &amp; agent runs"
+          title={t("more.library")}
           chevron
         />
         <ListRow
@@ -93,7 +99,7 @@ export default function MorePage() {
               <LifeBuoy className="size-4" />
             </Tile>
           }
-          title="Invite a friend"
+          title={t("more.invite")}
           chevron
         />
         <ListRow
@@ -103,7 +109,7 @@ export default function MorePage() {
               <HelpCircle className="size-4" />
             </Tile>
           }
-          title="Help center"
+          title={t("more.help")}
           chevron
         />
       </Section>

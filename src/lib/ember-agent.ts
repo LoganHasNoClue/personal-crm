@@ -9,6 +9,7 @@ import type {
 } from "openai/resources/responses/responses";
 
 import { env } from "./env";
+import { DEFAULT_LOCALE, type Locale } from "./i18n";
 import {
   SAMPLE_CONTACTS,
   checkInUrgency,
@@ -155,9 +156,44 @@ const TOOLS: Tool[] = [
 /* Tool execution                                                             */
 /* -------------------------------------------------------------------------- */
 
+const TOOL_LABELS = {
+  en: {
+    lookedUp: (name: string) => `Looked up ${name}`,
+    lookedUpMiss: (name: string) => `Looked up ${name} (no match)`,
+    foundOverdue: (n: number) =>
+      `Found ${n} overdue contact${n === 1 ? "" : "s"}`,
+    foundMutuals: (n: number, name: string) =>
+      `Found ${n} mutual${n === 1 ? "" : "s"} for ${name}`,
+    noMutuals: "No mutuals (unknown contact)",
+    unknownTool: (name: string) => `Unknown tool: ${name}`,
+    looking: (name: string) => `Looking up ${name}`,
+    scanning: "Scanning who's overdue",
+    findingMutuals: (name: string) => `Finding mutuals for ${name}`,
+    searchingWeb: "Searching the web",
+    searchedWeb: "Searched the web",
+    running: (n: string) => `Running ${n}`,
+  },
+  zh: {
+    lookedUp: (name: string) => `已查看 ${name} 的资料`,
+    lookedUpMiss: (name: string) => `未找到 ${name}`,
+    foundOverdue: (n: number) => `找到 ${n} 位该联络的朋友`,
+    foundMutuals: (n: number, name: string) =>
+      `为 ${name} 找到 ${n} 位共同好友`,
+    noMutuals: "未找到共同好友（联系人不存在）",
+    unknownTool: (name: string) => `未知工具：${name}`,
+    looking: (name: string) => `正在查看 ${name}`,
+    scanning: "正在梳理谁该联络了",
+    findingMutuals: (name: string) => `正在为 ${name} 查找共同好友`,
+    searchingWeb: "正在联网搜索",
+    searchedWeb: "已联网搜索",
+    running: (n: string) => `正在运行 ${n}`,
+  },
+} satisfies Record<Locale, Record<string, unknown>>;
+
 function runFunctionTool(
   name: string,
   rawArgs: string,
+  locale: Locale,
 ): { output: unknown; label: string; contactIds: string[] } {
   let args: Record<string, unknown> = {};
   try {
@@ -165,6 +201,7 @@ function runFunctionTool(
   } catch {
     // Fall through with empty args; tool can decide what to do.
   }
+  const L = TOOL_LABELS[locale];
 
   switch (name) {
     case "lookup_contact": {
@@ -178,8 +215,8 @@ function runFunctionTool(
       return {
         output: contact ? serializeFullContact(contact) : null,
         label: contact
-          ? `Looked up ${contact.nickname ?? contact.name}`
-          : `Looked up ${nameArg ?? id ?? "contact"} (no match)`,
+          ? L.lookedUp(contact.nickname ?? contact.name)
+          : L.lookedUpMiss(nameArg ?? id ?? "—"),
         contactIds: contact ? [contact.id] : [],
       };
     }
@@ -208,7 +245,7 @@ function runFunctionTool(
         }));
       return {
         output: { count: overdue.length, contacts: overdue },
-        label: `Found ${overdue.length} overdue contact${overdue.length === 1 ? "" : "s"}`,
+        label: L.foundOverdue(overdue.length),
         contactIds: overdue.map((o) => o.id),
       };
     }
@@ -219,7 +256,7 @@ function runFunctionTool(
       if (!target) {
         return {
           output: { error: `No contact with id "${id}".` },
-          label: `No mutuals (unknown contact)`,
+          label: L.noMutuals,
           contactIds: [],
         };
       }
@@ -238,16 +275,14 @@ function runFunctionTool(
           target: { id: target.id, name: target.nickname ?? target.name },
           mutuals,
         },
-        label: `Found ${mutuals.length} mutual${
-          mutuals.length === 1 ? "" : "s"
-        } for ${target.nickname ?? target.name}`,
+        label: L.foundMutuals(mutuals.length, target.nickname ?? target.name),
         contactIds: mutuals.map((m) => m.id),
       };
     }
     default:
       return {
         output: { error: `Unknown function tool: ${name}` },
-        label: `Unknown tool: ${name}`,
+        label: L.unknownTool(name),
         contactIds: [],
       };
   }
@@ -293,7 +328,22 @@ function serializeFullContact(c: Contact): Record<string, unknown> {
 /* System prompt                                                              */
 /* -------------------------------------------------------------------------- */
 
-function buildInstructions(focusContact: Contact | null): string {
+const LANGUAGE_DIRECTIVE: Record<Locale, string> = {
+  en: "Reply in English. Keep tone warm and concrete.",
+  zh:
+    "CRITICAL OUTPUT LANGUAGE: Simplified Chinese (简体中文). " +
+    "ALL of your output text MUST be written in Simplified Chinese, including " +
+    "list items, headings, and explanations — even when the user writes to " +
+    "you in English. Do NOT translate or change proper nouns, brand names, " +
+    "place names, contact names, or API/tool names — leave those in their " +
+    "original script. Tone: warm, concrete, never sycophantic. If you are " +
+    "about to produce English prose, stop and rewrite it in Chinese.",
+};
+
+function buildInstructions(
+  focusContact: Contact | null,
+  locale: Locale,
+): string {
   const today = new Date().toISOString().slice(0, 10);
   const network = SAMPLE_CONTACTS.map((c) => {
     const display = c.nickname ?? c.name;
@@ -325,6 +375,8 @@ function buildInstructions(focusContact: Contact | null): string {
   return [
     "You are **Ember**, the in-app AI agent inside Perso — a personal relationship CRM for friendships and personal networks.",
     "Your job is to help the user remember the people in their life, stay in touch warmly, and find paths through their network. Tone: warm, concrete, never sycophantic. Default to short, scannable replies.",
+    "",
+    `LANGUAGE: ${LANGUAGE_DIRECTIVE[locale]}`,
     "",
     "STYLE GUIDE",
     '- Use simple markdown: short paragraphs, **bold names**, and bullet lists where helpful. Avoid headings deeper than `##`.',
@@ -365,6 +417,8 @@ interface PendingFunctionCall {
 export interface RunEmberOptions {
   messages: EmberMessage[];
   contact?: Contact | null;
+  /** Active app locale. Drives the language Ember replies in. */
+  locale?: Locale;
   signal?: AbortSignal;
 }
 
@@ -382,7 +436,8 @@ export async function* runEmberAgent(
 ): AsyncGenerator<EmberStreamEvent, void, unknown> {
   const openai = client();
   const focus = options.contact ?? null;
-  const instructions = buildInstructions(focus);
+  const locale = options.locale ?? DEFAULT_LOCALE;
+  const instructions = buildInstructions(focus, locale);
 
   // Build the initial input from the chat history. Responses API accepts
   // `{role, content}` items directly.
@@ -392,6 +447,18 @@ export async function* runEmberAgent(
       role: m.role,
       content: m.content,
     }));
+
+  // GPT-4o-mini tends to match the user's last input language, which
+  // overrides the system instruction when the user types in a different
+  // language than the active app locale. We append a fresh language
+  // reminder as the last item so it appears most recently in context.
+  if (locale === "zh" && input.length > 0) {
+    input.push({
+      role: "user",
+      content:
+        "（系统提示：无论上面的用户消息用什么语言写，你的回复必须全部使用简体中文。专有名词、人名、品牌名可保留原文。）",
+    });
+  }
 
   let previousResponseId: string | undefined;
   const referencedContactIds = new Set<string>();
@@ -455,7 +522,7 @@ export async function* runEmberAgent(
             yield {
               type: "tool_start",
               tool: "web_search",
-              label: "Searching the web",
+              label: TOOL_LABELS[locale].searchingWeb,
             };
           }
           break;
@@ -478,7 +545,7 @@ export async function* runEmberAgent(
           yield {
             type: "tool_start",
             tool: meta.name as ToolName,
-            label: friendlyToolLabel(meta.name, argsString),
+            label: friendlyToolLabel(meta.name, argsString, locale),
           };
           break;
         }
@@ -488,7 +555,7 @@ export async function* runEmberAgent(
             yield {
               type: "tool_end",
               tool: "web_search",
-              label: "Searched the web",
+              label: TOOL_LABELS[locale].searchedWeb,
             };
           }
           break;
@@ -540,7 +607,7 @@ export async function* runEmberAgent(
     // Run each function call locally and assemble the follow-up input.
     const followUpInput: ResponseInputItem[] = [];
     for (const call of pending) {
-      const result = runFunctionTool(call.name, call.arguments);
+      const result = runFunctionTool(call.name, call.arguments, locale);
       yield {
         type: "tool_end",
         tool: call.name as ToolName,
@@ -570,13 +637,18 @@ export async function* runEmberAgent(
   };
 }
 
-function friendlyToolLabel(name: string, rawArgs: string): string {
+function friendlyToolLabel(
+  name: string,
+  rawArgs: string,
+  locale: Locale,
+): string {
   let args: Record<string, unknown> = {};
   try {
     args = rawArgs ? (JSON.parse(rawArgs) as Record<string, unknown>) : {};
   } catch {
     /* ignore */
   }
+  const L = TOOL_LABELS[locale];
 
   switch (name) {
     case "lookup_contact": {
@@ -586,11 +658,11 @@ function friendlyToolLabel(name: string, rawArgs: string): string {
         ? (findSampleContact(id)?.nickname ??
           findSampleContact(id)?.name ??
           id)
-        : (nameArg ?? "contact");
-      return `Looking up ${display}`;
+        : (nameArg ?? "—");
+      return L.looking(display);
     }
     case "list_overdue_contacts":
-      return "Scanning who's overdue";
+      return L.scanning;
     case "find_mutual_connections": {
       const id =
         typeof args.contact_id === "string" ? args.contact_id : null;
@@ -598,10 +670,10 @@ function friendlyToolLabel(name: string, rawArgs: string): string {
         ? (findSampleContact(id)?.nickname ??
           findSampleContact(id)?.name ??
           id)
-        : "contact";
-      return `Finding mutuals for ${display}`;
+        : "—";
+      return L.findingMutuals(display);
     }
     default:
-      return `Running ${name}`;
+      return L.running(name);
   }
 }

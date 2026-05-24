@@ -7,8 +7,11 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
+import { LanguageToggle } from "@/components/LanguageToggle";
 import { GlassCard, GlassPill } from "@/components/glass";
 import { Avatar, NavBar } from "@/components/ui";
+import { getT } from "@/lib/i18n/server";
+import type { Translator } from "@/lib/i18n";
 import {
   SAMPLE_CONTACTS,
   checkInUrgency,
@@ -17,7 +20,8 @@ import {
 import { formatRelative } from "@/lib/time";
 import type { Contact } from "@/types/contact";
 
-export default function Home() {
+export default async function Home() {
+  const { t } = await getT();
   const overdue = [...SAMPLE_CONTACTS]
     .map((c) => ({ contact: c, urgency: checkInUrgency(c) }))
     .filter(
@@ -35,12 +39,19 @@ export default function Home() {
   return (
     <main className="app-shell mx-auto flex w-full max-w-md flex-col gap-6 px-5 pt-10 sm:max-w-lg sm:pt-14">
       <NavBar
-        title="Hey there 👋"
-        subtitle={`${SAMPLE_CONTACTS.length} people in your network`}
+        title={t("home.greeting")}
+        subtitle={t("home.subtitle", { count: SAMPLE_CONTACTS.length })}
         trailing={
-          <Link href="/more" className="contents" aria-label="More">
-            <Avatar name="You" seed="self" size="md" ring />
-          </Link>
+          <div className="flex items-center gap-2">
+            <LanguageToggle />
+            <Link
+              href="/more"
+              className="contents"
+              aria-label={t("home.aria.more")}
+            >
+              <Avatar name={t("common.you")} seed="self" size="md" ring />
+            </Link>
+          </div>
         }
       />
 
@@ -48,18 +59,18 @@ export default function Home() {
       <div className="grid grid-cols-3 gap-2">
         <QuickAction
           href="/chat"
-          label="Ask Ember"
+          label={t("home.quick.askEmber")}
           glyph={<Sparkles className="size-5" />}
           accent
         />
         <QuickAction
           href="/map"
-          label="Map"
+          label={t("home.quick.map")}
           glyph={<MapIcon className="size-5" />}
         />
         <QuickAction
           href="/add"
-          label="Add"
+          label={t("home.quick.add")}
           glyph={<UserPlus2 className="size-5" />}
         />
       </div>
@@ -69,18 +80,18 @@ export default function Home() {
         <section className="flex flex-col gap-3">
           <div className="flex items-center justify-between">
             <h2 className="px-1 text-[12px] font-semibold uppercase tracking-[0.06em] text-zinc-500 dark:text-zinc-400">
-              Catch up due
+              {t("home.section.catchUp")}
             </h2>
             <Link
               href="/search?q=overdue"
               className="text-[13px] font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-zinc-100"
             >
-              See all
+              {t("common.seeAll")}
             </Link>
           </div>
           <div className="-mx-5 flex gap-3 overflow-x-auto px-5 pb-1">
             {overdue.map((c) => (
-              <CatchUpCard key={c.id} contact={c} />
+              <CatchUpCard key={c.id} contact={c} t={t} />
             ))}
           </div>
         </section>
@@ -101,13 +112,13 @@ export default function Home() {
             </span>
             <div className="min-w-0 flex-1">
               <p className="text-[12px] font-semibold uppercase tracking-[0.06em] text-violet-700 dark:text-violet-300">
-                Try this
+                {t("home.ember.tryThis")}
               </p>
               <p className="mt-0.5 text-[17px] font-semibold leading-tight text-zinc-900 dark:text-zinc-50">
-                &ldquo;Who should I check in on?&rdquo;
+                {t("home.ember.promptTitle")}
               </p>
               <p className="mt-1 text-[13px] text-zinc-600 dark:text-zinc-300">
-                I&apos;ll surface the friendships that need a little love.
+                {t("home.ember.promptBody")}
               </p>
             </div>
             <ArrowRight className="size-5 text-zinc-500 dark:text-zinc-300" />
@@ -119,18 +130,18 @@ export default function Home() {
       <section className="flex flex-col gap-3">
         <div className="flex items-center justify-between">
           <h2 className="px-1 text-[12px] font-semibold uppercase tracking-[0.06em] text-zinc-500 dark:text-zinc-400">
-            Recently added
+            {t("home.section.recent")}
           </h2>
           <Link
             href="/people"
             className="text-[13px] font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-zinc-100"
           >
-            See all
+            {t("common.seeAll")}
           </Link>
         </div>
         <div className="-mx-5 flex gap-3 overflow-x-auto px-5 pb-1">
           {recentlyAdded.map((c) => (
-            <RecentCard key={c.id} contact={c} />
+            <RecentCard key={c.id} contact={c} t={t} />
           ))}
         </div>
       </section>
@@ -140,17 +151,17 @@ export default function Home() {
         <div className="flex items-stretch gap-2">
           <NetworkStat
             value={`${SAMPLE_CONTACTS.filter((c) => c.source === "apple-contacts").length}`}
-            label="From Apple"
+            label={t("home.stat.fromApple")}
           />
           <Divider />
           <NetworkStat
             value={`${SAMPLE_CONTACTS.filter((c) => c.source === "linkedin").length}`}
-            label="From LinkedIn"
+            label={t("home.stat.fromLinkedin")}
           />
           <Divider />
           <NetworkStat
             value={`${overdue.length}`}
-            label="Overdue"
+            label={t("home.stat.overdue")}
             tone="warning"
           />
         </div>
@@ -193,7 +204,13 @@ function QuickAction({
   );
 }
 
-function CatchUpCard({ contact }: { contact: Contact }) {
+function CatchUpCard({
+  contact,
+  t,
+}: {
+  contact: Contact;
+  t: Translator;
+}) {
   const display = contact.nickname ?? contact.name;
   const since = daysSinceLastContact(contact);
   const due =
@@ -222,13 +239,21 @@ function CatchUpCard({ contact }: { contact: Contact }) {
       </div>
       <div className="inline-flex items-center gap-1 rounded-full bg-amber-400/20 px-2 py-0.5 text-[11px] font-medium text-amber-700 dark:bg-amber-400/15 dark:text-amber-300">
         <Clock className="size-3" />
-        {due !== null ? `${due}d overdue` : "Catch up"}
+        {due !== null
+          ? t("common.daysOverdue", { count: due })
+          : t("common.catchUp")}
       </div>
     </Link>
   );
 }
 
-function RecentCard({ contact }: { contact: Contact }) {
+function RecentCard({
+  contact,
+  t,
+}: {
+  contact: Contact;
+  t: Translator;
+}) {
   const display = contact.nickname ?? contact.name;
   return (
     <Link
@@ -251,7 +276,7 @@ function RecentCard({ contact }: { contact: Contact }) {
         </span>
       </div>
       <GlassPill tone="info">
-        Added {formatRelative(contact.createdAt)} ago
+        {t("common.addedAgo", { time: formatRelative(contact.createdAt) })}
       </GlassPill>
     </Link>
   );

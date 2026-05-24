@@ -6,6 +6,8 @@ import {
   type EmberStreamEvent,
   runEmberAgent,
 } from "@/lib/ember-agent";
+import { DEFAULT_LOCALE, isLocale, type Locale } from "@/lib/i18n";
+import { getLocale } from "@/lib/i18n/server";
 import { findSampleContact } from "@/lib/sample-contacts";
 
 export const runtime = "nodejs";
@@ -14,6 +16,7 @@ export const dynamic = "force-dynamic";
 interface ChatRequestBody {
   messages?: Array<{ role?: string; content?: string }>;
   contactId?: string | null;
+  locale?: string | null;
 }
 
 /**
@@ -53,6 +56,13 @@ export async function POST(req: Request) {
     ? (findSampleContact(body.contactId) ?? null)
     : null;
 
+  // Prefer the locale the client sent (always reflects the most recent
+  // toggle), then fall back to the cookie, then to English.
+  const cookieLocale = await getLocale();
+  const locale: Locale = isLocale(body.locale)
+    ? body.locale
+    : cookieLocale ?? DEFAULT_LOCALE;
+
   const encoder = new TextEncoder();
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
@@ -64,6 +74,7 @@ export async function POST(req: Request) {
         for await (const event of runEmberAgent({
           messages,
           contact,
+          locale,
           signal: req.signal,
         })) {
           send(event);

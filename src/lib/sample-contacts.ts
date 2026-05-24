@@ -623,14 +623,39 @@ export const SAMPLE_CONTACTS: Contact[] = [
   {
     id: "c_prudhvi",
     name: "Prudhvi Gadiraju",
-    headline: "Senior SWE / Tech Lead @ Thumbtack",
-    context: "Connected on LinkedIn",
+    headline: "Senior SWE / Tech Lead @ Thumbtack · building Magic Ring on the side",
+    context: "Met at the Easel × Jen meetup; connected on LinkedIn",
+    notes:
+      "Day job is tech lead at Thumbtack; he's the one building Magic Ring on the side. Potential investment or partnership opportunity.",
+    currentProject: {
+      name: "Magic Ring",
+      description: "Voice-activated smart ring with NFC + IMU sensors.",
+      features: ["Voice notes", "Smart-home control", "Contact sharing"],
+      details: [
+        { label: "Target price", value: "$349" },
+        { label: "Bootstrapped", value: "~$50k" },
+        {
+          label: "Funding status",
+          value: "Seeking pre-seed to fund a 1,000-unit manufacturing run",
+        },
+      ],
+    },
     photoUrl: localPhoto("c_prudhvi", "png"),
     source: "linkedin",
-    tags: ["linkedin-met", "engineer", "thumbtack"],
+    tags: [
+      "linkedin-met",
+      "engineer",
+      "thumbtack",
+      "founder",
+      "hardware",
+      "wearable",
+      "easel-meetup",
+    ],
     profiles: { linkedin: linkedinSearch("Prudhvi Gadiraju") },
-    checkInCadenceDays: 120,
-    createdAt: daysAgo(0),
+    mutualConnectionIds: ["c_charlie_lin", "c_neil"],
+    checkInCadenceDays: 30,
+    lastContactedAt: daysAgo(1),
+    createdAt: daysAgo(1),
     updatedAt: daysAgo(0),
   },
   {
@@ -771,7 +796,7 @@ export const SAMPLE_CONTACTS: Contact[] = [
     source: "linkedin",
     tags: ["linkedin-met", "founder", "ai", "easel-meetup", "investor-adjacent"],
     profiles: { linkedin: linkedinSearch("Charlie Lin") },
-    mutualConnectionIds: ["c_neil", "c_shibo", "c_jess"],
+    mutualConnectionIds: ["c_neil", "c_shibo", "c_prudhvi"],
     checkInCadenceDays: 30,
     lastContactedAt: daysAgo(0),
     createdAt: daysAgo(0),
@@ -794,34 +819,6 @@ export const SAMPLE_CONTACTS: Contact[] = [
   // Captured by voice memo at the Easel × Jen meetup. Source = "audio" so
   // the import-source pill reflects how they actually entered the CRM.
   // -------------------------------------------------------------------------
-  {
-    id: "c_jess",
-    name: "Jess",
-    headline: "Founder · Magic Ring",
-    context: "Met at the Easel × Jen meetup",
-    notes: "Potential investment or partnership opportunity.",
-    currentProject: {
-      name: "Magic Ring",
-      description: "Voice-activated smart ring with NFC + IMU sensors.",
-      features: ["Voice notes", "Smart-home control", "Contact sharing"],
-      details: [
-        { label: "Target price", value: "$349" },
-        { label: "Bootstrapped", value: "~$50k" },
-        {
-          label: "Funding status",
-          value: "Seeking pre-seed to fund a 1,000-unit manufacturing run",
-        },
-      ],
-    },
-    photoUrl: localPhoto("c_jess"),
-    source: "audio",
-    tags: ["audio-import", "founder", "hardware", "wearable", "easel-meetup"],
-    mutualConnectionIds: ["c_charlie_lin", "c_neil"],
-    checkInCadenceDays: 30,
-    lastContactedAt: daysAgo(1),
-    createdAt: daysAgo(1),
-    updatedAt: daysAgo(1),
-  },
   {
     id: "c_marco_audio",
     name: "Marco",

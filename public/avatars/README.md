@@ -16,8 +16,8 @@ on contacts whose `photoUrl` is set to `/avatars/<contact-id>.jpg`.
 ## Naming convention
 
 `<contact-id>.jpg` — for example `c_waris.jpg`, `c_charlie_lin.jpg`,
-`c_jess.jpg`. The contact's `id` field in `sample-contacts.ts` is the
-key.
+`c_prudhvi.png`. The contact's `id` field in `sample-contacts.ts` is
+the key.
 
 JPG is preferred. PNG and WebP also work — but you'll need to update the
 contact's `photoUrl` accordingly (e.g. `/avatars/c_waris.png`).
