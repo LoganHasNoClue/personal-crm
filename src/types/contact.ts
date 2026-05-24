@@ -54,6 +54,32 @@ export interface ContactProfiles {
   imessage?: string;
 }
 
+/**
+ * A "fact" about someone's current project — target price, traction,
+ * funding ask, team size, etc. Free-form label/value so the UI can
+ * render any number of these as a clean key/value list.
+ */
+export interface ProjectDetail {
+  label: string;
+  value: string;
+}
+
+/**
+ * What someone is currently building. Populated by the audio-import
+ * flow (see `src/lib/audio-extract.ts`) and shown as its own section
+ * on the contact detail page.
+ */
+export interface CurrentProject {
+  /** Project / product name. */
+  name: string;
+  /** One- or two-line elevator pitch. */
+  description?: string;
+  /** Capabilities / angles — rendered as a pill list. */
+  features?: string[];
+  /** Business or status facts — rendered as a key/value list. */
+  details?: ProjectDetail[];
+}
+
 export interface Contact {
   id: ContactId;
   name: string;
@@ -75,6 +101,10 @@ export interface Contact {
   tags?: ContactTag[];
   /** Reachability / social profiles. */
   profiles?: ContactProfiles;
+  /** What they're currently building — populated by the audio import. */
+  currentProject?: CurrentProject;
+  /** Aspirational goals or "what they want to do next". */
+  aspirations?: string;
   /**
    * IDs of other contacts this person also knows. Bidirectional edges in
    * the "who knows who" graph; v1 keeps this denormalized for simplicity.

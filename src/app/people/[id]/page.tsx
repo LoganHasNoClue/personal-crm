@@ -4,7 +4,9 @@ import {
   MapPin,
   MessageCircle,
   Phone,
+  Rocket,
   Sparkles,
+  Target,
 } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -134,6 +136,28 @@ export default async function PersonDetailPage({
           enabled
         />
       </div>
+
+      {contact.currentProject && (
+        <Section header="Building">
+          <ProjectHero project={contact.currentProject} />
+          {contact.currentProject.details?.map((d) => (
+            <ListRow key={d.label} title={d.label} value={d.value} />
+          ))}
+        </Section>
+      )}
+
+      {contact.aspirations && (
+        <Section header="Wants to">
+          <div className="flex items-start gap-3 px-4 py-3">
+            <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-xl bg-amber-400/20 text-amber-700 dark:bg-amber-400/15 dark:text-amber-300">
+              <Target className="size-4" />
+            </span>
+            <p className="text-[15px] leading-relaxed text-zinc-800 dark:text-zinc-200">
+              {contact.aspirations}
+            </p>
+          </div>
+        </Section>
+      )}
 
       <Section header="About">
         {contact.context && (
@@ -287,6 +311,50 @@ function ActionTile({
     <button type="button" disabled={!enabled} aria-label={label} className="contents">
       {inner}
     </button>
+  );
+}
+
+/**
+ * Top row of the "Building" section. Renders the project name + pitch +
+ * feature pills as a gradient-tinted block, so it reads as a story card
+ * rather than a plain settings row. Details get rendered as ListRow
+ * siblings underneath in the same Section.
+ */
+function ProjectHero({
+  project,
+}: {
+  project: NonNullable<Contact["currentProject"]>;
+}) {
+  return (
+    <div className="relative flex flex-col gap-2 px-4 py-4">
+      <div className="flex items-start gap-3">
+        <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-indigo-500 text-white shadow-[0_4px_14px_-4px_rgba(99,102,241,0.65)]">
+          <Rocket className="size-4" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="text-[17px] font-semibold leading-tight text-zinc-900 dark:text-zinc-50">
+            {project.name}
+          </p>
+          {project.description && (
+            <p className="mt-1 text-[14px] leading-snug text-zinc-600 dark:text-zinc-300">
+              {project.description}
+            </p>
+          )}
+        </div>
+      </div>
+      {(project.features?.length ?? 0) > 0 && (
+        <div className="flex flex-wrap gap-1.5 pt-1">
+          {project.features!.map((f) => (
+            <span
+              key={f}
+              className="inline-flex items-center rounded-full border border-violet-300/40 bg-gradient-to-br from-violet-500/10 to-indigo-500/10 px-2.5 py-1 text-[11px] font-medium text-violet-700 dark:border-violet-400/25 dark:text-violet-300"
+            >
+              {f}
+            </span>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 

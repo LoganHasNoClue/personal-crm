@@ -797,10 +797,22 @@ export const SAMPLE_CONTACTS: Contact[] = [
   {
     id: "c_jess",
     name: "Jess",
-    headline: "Founder · Magic Ring (voice-activated smart ring)",
+    headline: "Founder · Magic Ring",
     context: "Met at the Easel × Jen meetup",
-    notes:
-      "Building a voice-activated smart ring with NFC + IMU sensors. Features: voice notes, smart-home control, contact sharing. Target price $349. Bootstrapped ~$50k; seeking pre-seed to fund a 1,000-unit manufacturing run. Potential investment / partnership.",
+    notes: "Potential investment or partnership opportunity.",
+    currentProject: {
+      name: "Magic Ring",
+      description: "Voice-activated smart ring with NFC + IMU sensors.",
+      features: ["Voice notes", "Smart-home control", "Contact sharing"],
+      details: [
+        { label: "Target price", value: "$349" },
+        { label: "Bootstrapped", value: "~$50k" },
+        {
+          label: "Funding status",
+          value: "Seeking pre-seed to fund a 1,000-unit manufacturing run",
+        },
+      ],
+    },
     photoUrl: localPhoto("c_jess"),
     source: "audio",
     tags: ["audio-import", "founder", "hardware", "wearable", "easel-meetup"],
@@ -816,7 +828,16 @@ export const SAMPLE_CONTACTS: Contact[] = [
     headline: "Building a dynamic agent-driven calendar",
     context: "Met at the Easel × Jen meetup",
     notes:
-      "Italian, based in LA. Co-builds a calendar that auto-adjusts schedules based on task load, with potential automated email coordination. Working with Anton. Possibly the same person as Marco Wielgus — confirm.",
+      "Italian, based in LA. Possibly the same person as Marco Wielgus — confirm.",
+    currentProject: {
+      name: "Dynamic Calendar with Agents",
+      description: "Automatically adjusts schedules based on task load.",
+      features: ["Automated email coordination (planned)"],
+      details: [
+        { label: "Team", value: "From Italy, based in LA" },
+        { label: "Co-builder", value: "Anton" },
+      ],
+    },
     meetingPlace: { label: "Los Angeles, CA", latitude: 34.0522, longitude: -118.2437 },
     photoUrl: localPhoto("c_marco_audio"),
     source: "audio",
@@ -830,10 +851,18 @@ export const SAMPLE_CONTACTS: Contact[] = [
   {
     id: "c_anton",
     name: "Anton",
-    headline: "Co-building a dynamic agent-driven calendar (w/ Marco)",
+    headline: "Co-building a dynamic agent-driven calendar",
     context: "Met at the Easel × Jen meetup",
-    notes:
-      "Italian, based in LA. Building the dynamic calendar product alongside Marco — auto-adjusts schedules based on task load with potential automated email coordination.",
+    notes: "Italian, based in LA.",
+    currentProject: {
+      name: "Dynamic Calendar with Agents",
+      description: "Automatically adjusts schedules based on task load.",
+      features: ["Automated email coordination (planned)"],
+      details: [
+        { label: "Team", value: "From Italy, based in LA" },
+        { label: "Co-builder", value: "Marco" },
+      ],
+    },
     meetingPlace: { label: "Los Angeles, CA", latitude: 34.0522, longitude: -118.2437 },
     photoUrl: localPhoto("c_anton"),
     source: "audio",
@@ -847,10 +876,24 @@ export const SAMPLE_CONTACTS: Contact[] = [
   {
     id: "c_pumica",
     name: "Pumica",
-    headline: "Building a mental-health companion (kintsugi concept)",
+    headline: "Building a mental-health companion",
     context: "Met at the Easel × Jen meetup",
-    notes:
-      "Therapy alternative for people who can't afford expensive mental-health support. Built around the Japanese kintsugi concept — turning broken experiences into gold by helping users process them into learning.",
+    currentProject: {
+      name: "Mental Health Companion",
+      description:
+        "Therapy alternative for people who can't afford expensive mental-health support.",
+      details: [
+        {
+          label: "Concept",
+          value:
+            "Built on the Japanese kintsugi idea — turning broken experiences into gold",
+        },
+        {
+          label: "Purpose",
+          value: "Helps users process experiences into learning opportunities",
+        },
+      ],
+    },
     photoUrl: localPhoto("c_pumica"),
     source: "audio",
     tags: ["audio-import", "founder", "wellness", "ai", "easel-meetup"],
@@ -862,10 +905,14 @@ export const SAMPLE_CONTACTS: Contact[] = [
   {
     id: "c_neil",
     name: "Neil",
-    headline: "Jen AI intern (eng + GTM) · Super Parent founder · Canadian",
+    headline: "Jen AI intern (eng + GTM) · Super Parent founder",
     context: "Met at the Easel × Jen meetup",
-    notes:
-      "Currently interning at Jen across engineering and GTM. Recently launched Super Parent — 20 DAU traction so far.",
+    notes: "Canadian. Interning at Jen across engineering and GTM.",
+    currentProject: {
+      name: "Super Parent",
+      description: "Recently launched product.",
+      details: [{ label: "Traction", value: "20 DAU" }],
+    },
     photoUrl: localPhoto("c_neil"),
     source: "audio",
     tags: ["audio-import", "founder", "jen", "easel-meetup", "canada"],
@@ -898,10 +945,15 @@ export const SAMPLE_CONTACTS: Contact[] = [
   {
     id: "c_scu_ai_group",
     name: "SCU AI students (group)",
-    headline: "Multiple Santa Clara University students working on AI projects",
+    headline: "Santa Clara University students · various AI projects",
     context: "Met at the Easel × Jen meetup",
     notes:
-      "Group from Santa Clara University working on a variety of AI projects. Sharvari, Nirvisha, and Bhoomika are part of this cluster — add the others once you have names.",
+      "Group placeholder — Sharvari, Nirvisha, and Bhoomika are part of this cluster. Split this entry once you have individual names.",
+    currentProject: {
+      name: "Various AI projects",
+      description:
+        "Multiple SCU students working on a range of AI projects. Mix of student-led research and side projects.",
+    },
     meetingPlace: { label: "Santa Clara, CA", latitude: 37.3541, longitude: -121.9552 },
     photoUrl: localPhoto("c_scu_ai_group"),
     source: "audio",
@@ -915,9 +967,13 @@ export const SAMPLE_CONTACTS: Contact[] = [
   {
     id: "c_easel_winner_ar",
     name: "Easel hackathon winner",
-    headline: "Building a kids' AR imagination app",
+    headline: "Previous Easel hackathon winner · building a kids' AR app",
     context: "Met at the Easel × Jen meetup",
-    notes: "Previous Easel hackathon winner. Building an AR app for kids focused on imagination.",
+    currentProject: {
+      name: "Kids' AR imagination app",
+      description:
+        "AR app for kids focused on imagination and play. Won a previous Easel hackathon.",
+    },
     photoUrl: localPhoto("c_easel_winner_ar"),
     source: "audio",
     tags: ["audio-import", "founder", "ar", "kids", "easel-meetup", "needs-name"],
@@ -929,9 +985,13 @@ export const SAMPLE_CONTACTS: Contact[] = [
   {
     id: "c_pet_health_founder",
     name: "Pet-health founder",
-    headline: "Founder · pet-health diagnostic app · finance background",
+    headline: "Founder · pet-health diagnostic",
     context: "Met at the Easel × Jen meetup",
-    notes: "Building a pet-health diagnostic app. Has a finance background.",
+    notes: "Finance background — career-switched into pet health.",
+    currentProject: {
+      name: "Pet-health diagnostic app",
+      description: "Diagnostic app for pet health.",
+    },
     photoUrl: localPhoto("c_pet_health_founder"),
     source: "audio",
     tags: ["audio-import", "founder", "pet", "health", "easel-meetup", "needs-name"],
@@ -943,10 +1003,14 @@ export const SAMPLE_CONTACTS: Contact[] = [
   {
     id: "c_chat_history_founder",
     name: "Chat-history tool founder",
-    headline: "Building a tool to organize chat history across LLMs",
+    headline: "Building a cross-LLM chat-history organizer",
     context: "Met at the Easel × Jen meetup",
-    notes:
-      "Builds a tool for organizing chat history when switching between LLMs (ChatGPT, Claude, Gemini, etc.). Pain point a lot of power-users feel.",
+    notes: "Pain point a lot of LLM power-users feel.",
+    currentProject: {
+      name: "Chat-history organization tool",
+      description:
+        "Organizes your chat history when switching between LLMs (ChatGPT, Claude, Gemini, etc.).",
+    },
     photoUrl: localPhoto("c_chat_history_founder"),
     source: "audio",
     tags: ["audio-import", "founder", "ai", "tooling", "easel-meetup", "needs-name"],
@@ -960,7 +1024,10 @@ export const SAMPLE_CONTACTS: Contact[] = [
     name: "Telegram group-planning founder",
     headline: "Building a group-planning agent for Telegram",
     context: "Met at the Easel × Jen meetup",
-    notes: "Working on a group-planning agent inside Telegram.",
+    currentProject: {
+      name: "Group-planning agent for Telegram",
+      description: "Agent that helps groups coordinate plans inside Telegram.",
+    },
     photoUrl: localPhoto("c_telegram_planner_founder"),
     source: "audio",
     tags: ["audio-import", "founder", "ai", "telegram", "easel-meetup", "needs-name"],
